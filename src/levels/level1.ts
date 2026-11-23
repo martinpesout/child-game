@@ -70,6 +70,11 @@ export class Level1Meadow implements Level {
     return Math.min(3, 1 + Math.floor((2 * p.bonuses) / Math.max(1, p.bonusTotal)));
   }
 
+  /** Props that may hide the hamster from the camera. */
+  get occluders(): THREE.Object3D[] {
+    return this.meadow.occluders;
+  }
+
   /** Exposed for NPCs and the camera. */
   get hamsterModel(): Hamster {
     return this.hamster;

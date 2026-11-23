@@ -5,6 +5,7 @@ import { KeyboardController } from './input/keyboard';
 import { TouchController } from './input/touch';
 import { FollowCamera } from './world/camera';
 import { Level1Meadow } from './levels/level1';
+import { OcclusionFader } from './world/occlusion';
 
 // TEMP demo (Task 6) – replaced in Task 9
 const canvas = document.getElementById('game') as HTMLCanvasElement;
@@ -24,6 +25,7 @@ level.setup(scene, {
   onNearNpc: () => {},
 });
 follow.snap(level.player.position);
+const fader = new OcclusionFader(level.occluders);
 
 function resize() {
   renderer.setSize(window.innerWidth, window.innerHeight, false);
@@ -39,6 +41,7 @@ new GameLoop(
   (dt) => {
     level.update(dt, input.read(), follow.yaw);
     follow.update(level.player.position, dt);
+    fader.update(camera.position, level.player.position, dt);
   },
   () => renderer.render(scene, camera),
 ).start();

@@ -278,6 +278,8 @@ function scatter(
 
 export interface Meadow {
   readonly sun: THREE.DirectionalLight;
+  /** Props that may hide the player and should fade out (bushes, rocks, tree, house). */
+  readonly occluders: THREE.Object3D[];
   update(focus: THREE.Vector3): void;
   dispose(): void;
 }
@@ -340,11 +342,18 @@ export function buildMeadow(scene: THREE.Scene, data: LevelData): Meadow {
   });
   root.add(petals, stems);
 
+  const occluders: THREE.Object3D[] = [];
   for (const prop of data.props) {
-    if (prop.type === 'bush') root.add(makeBush(prop.collider, r));
-    if (prop.type === 'rock') root.add(makeRock(prop.collider, r));
-    if (prop.type === 'tree') root.add(makeTree(prop.collider));
-    if (prop.type === 'house') root.add(makeHouse(prop.collider)).children.at(-1)!.rotation.y = houseYaw;
+    let o: THREE.Object3D;
+    if (prop.type === 'bush') o = makeBush(prop.collider, r);
+    else if (prop.type === 'rock') o = makeRock(prop.collider, r);
+    else if (prop.type === 'tree') o = makeTree(prop.collider);
+    else {
+      o = makeHouse(prop.collider);
+      o.rotation.y = houseYaw;
+    }
+    root.add(o);
+    occluders.push(o);
   }
   root.add(makeFence(data.halfSize));
   root.add(makeHills());
@@ -363,8 +372,10 @@ export function buildMeadow(scene: THREE.Scene, data: LevelData): Meadow {
   scene.add(root);
 
   const sunOffset = new THREE.Vector3(6, 14, 8);
+  root.updateMatrixWorld(true);
   return {
     sun,
+    occluders,
     update(focus: THREE.Vector3) {
       sun.target.position.copy(focus);
       sun.position.copy(focus).add(sunOffset);
