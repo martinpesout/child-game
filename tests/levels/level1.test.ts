@@ -71,3 +71,34 @@ it('skok a cupitání vyšlou události pro zvuky', () => {
   expect(e.steps).toBeGreaterThan(3);
   level.dispose();
 });
+
+import { remainingText } from '../../src/levels/level1';
+
+it('remainingText skloňuje česky', () => {
+  expect(remainingText(1)).toBe('Ještě jeden oříšek!');
+  expect(remainingText(4)).toBe('Ještě 4 oříšky!');
+  expect(remainingText(6)).toBe('Ještě 6 oříšků!');
+});
+
+it('u ježka se onNearNpc ozve jednou a znovu nejdřív po 8 s', () => {
+  const scene = new THREE.Scene();
+  const near = { ...LEVEL1, spawn: { x: LEVEL1.hedgehog.x + 1, z: LEVEL1.hedgehog.z } };
+  const level = new Level1Meadow(near);
+  let n = 0;
+  level.setup(scene, { ...events(), onNearNpc: () => n++ });
+  for (let i = 0; i < 60; i++) level.update(1 / 60, { move: { x: 0, y: 0 }, action: false }, 0);
+  expect(n).toBe(1);
+  for (let i = 0; i < 8 * 60; i++) level.update(1 / 60, { move: { x: 0, y: 0 }, action: false }, 0);
+  expect(n).toBe(2);
+  level.dispose();
+});
+
+it('ježek je překážka – křeček jím neprojde', () => {
+  const scene = new THREE.Scene();
+  const near = { ...LEVEL1, spawn: { x: LEVEL1.hedgehog.x + 1.5, z: LEVEL1.hedgehog.z } };
+  const level = new Level1Meadow(near);
+  level.setup(scene, events());
+  for (let i = 0; i < 120; i++) level.update(1 / 60, { move: { x: -1, y: 0 }, action: false }, 0);
+  expect(level.player.position.x).toBeGreaterThan(LEVEL1.hedgehog.x + 0.4);
+  level.dispose();
+});

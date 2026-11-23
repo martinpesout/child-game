@@ -3,6 +3,7 @@ import type { InputState } from '../input/types';
 import { cameraRelative } from '../input/combine';
 import { stepBody, type Body, type PhysicsWorld } from '../physics/physics';
 import { Hamster } from '../characters/hamster';
+import { Hedgehog } from '../characters/hedgehog';
 import { PartKit } from '../characters/parts';
 import { buildMeadow, type Meadow } from '../world/meadow';
 import { makeTreat } from '../world/treats';
@@ -19,6 +20,16 @@ const CELEBRATION_TIME = 2.2;
 const PICKUP_ANIM = 0.25;
 /** Treats are drawn bigger than life so kids spot them in the grass. */
 const TREAT_SCALE = 1.8;
+const NPC_NEAR = 1.6;
+const NPC_REPEAT = 8;
+const HEDGEHOG_RADIUS = 0.4;
+
+/** "Ještě N oříšků!" with Czech plural forms (1 / 2–4 / 5+). */
+export function remainingText(n: number): string {
+  if (n === 1) return 'Ještě jeden oříšek!';
+  if (n >= 2 && n <= 4) return `Ještě ${n} oříšky!`;
+  return `Ještě ${n} oříšků!`;
+}
 
 interface Treat {
   spot: ItemSpot;
@@ -45,6 +56,8 @@ export class Level1Meadow implements Level {
   private celebrateLeft = -1;
   private completedFired = false;
   private readonly tmp = new THREE.Vector3();
+  private hedgehog!: Hedgehog;
+  private npcCooldown = 0;
 
   constructor(private readonly data: LevelData = LEVEL1) {}
 
@@ -75,9 +88,8 @@ export class Level1Meadow implements Level {
     return this.meadow.occluders;
   }
 
-  /** Exposed for NPCs and the camera. */
-  get hamsterModel(): Hamster {
-    return this.hamster;
+  get npc(): Hedgehog {
+    return this.hedgehog;
   }
 
   setup(scene: THREE.Scene, events: LevelEvents): void {
@@ -85,7 +97,14 @@ export class Level1Meadow implements Level {
     this.events = events;
     const d = this.data;
     this.meadow = buildMeadow(scene, d);
-    this.world = { colliders: d.colliders, bounds: { halfSize: d.halfSize } };
+    this.world = {
+      colliders: [...d.colliders, { kind: 'cylinder', x: d.hedgehog.x, z: d.hedgehog.z, radius: HEDGEHOG_RADIUS, height: 1 }],
+      bounds: { halfSize: d.halfSize },
+    };
+    this.hedgehog = new Hedgehog();
+    this.hedgehog.root.position.set(d.hedgehog.x, 0, d.hedgehog.z);
+    scene.add(this.hedgehog.root);
+    this.npcCooldown = 0;
     this.body = { pos: { x: d.spawn.x, y: 0, z: d.spawn.z }, vel: { x: 0, y: 0, z: 0 }, radius: 0.25, grounded: true };
     this.hamster = new Hamster();
     this.hamster.face(Math.PI);
@@ -163,6 +182,19 @@ export class Level1Meadow implements Level {
     }
 
     this.updateHint(dt, collected);
+    this.updateNpc(dt);
+  }
+
+  private updateNpc(dt: number): void {
+    const pos = this.hamster.root.position;
+    const near = Math.hypot(pos.x - this.data.hedgehog.x, pos.z - this.data.hedgehog.z) < NPC_NEAR;
+    this.hedgehog.update(dt, Math.hypot(pos.x - this.data.hedgehog.x, pos.z - this.data.hedgehog.z) < 6 ? pos : null);
+    this.hamster.lookAt(near ? this.hedgehog.root.position : null);
+    this.npcCooldown = Math.max(0, this.npcCooldown - dt);
+    if (near && this.npcCooldown === 0 && !this.progress.isComplete()) {
+      this.npcCooldown = NPC_REPEAT;
+      this.events.onNearNpc();
+    }
   }
 
   isComplete(): boolean {
@@ -176,6 +208,7 @@ export class Level1Meadow implements Level {
   dispose(): void {
     this.meadow.dispose();
     this.hamster.dispose();
+    this.hedgehog.dispose();
     this.treats.forEach((t) => t.root.removeFromParent());
     this.treats = [];
     this.kit.dispose();
