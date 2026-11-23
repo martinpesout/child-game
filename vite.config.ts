@@ -9,6 +9,8 @@ export default defineConfig({
   plugins: [
     VitePWA({
       registerType: 'autoUpdate',
+      // manifest also in `npm run dev`, so "Add to Home Screen" works while testing on a phone/tablet
+      devOptions: { enabled: true, type: 'module' },
       includeAssets: ['icons/*.png'],
       manifest: {
         name: 'Křečkova cesta',

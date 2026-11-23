@@ -120,3 +120,18 @@ it('playClip vrátí null, když soubor chybí', async () => {
   vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false })));
   expect(await s.playClip('voice/none.m4a')).toBeNull();
 });
+
+it('na iOS nastaví přehrávání médií, aby zvuk hrál i při ztlumeném telefonu', () => {
+  const session = { type: 'auto' };
+  Object.defineProperty(navigator, 'audioSession', { value: session, configurable: true });
+  const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(async () => {});
+  const s = new Sfx();
+  s.unlock();
+  expect(session.type).toBe('playback');
+  // older iOS: a silent looping <audio> switches the audio session to "playback"
+  expect(play).toHaveBeenCalled();
+  s.unlock();
+  expect(play).toHaveBeenCalledTimes(1);
+  play.mockRestore();
+  delete (navigator as unknown as { audioSession?: unknown }).audioSession;
+});

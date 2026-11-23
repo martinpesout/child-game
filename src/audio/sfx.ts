@@ -6,6 +6,22 @@ const note = (semisFromC5: number) => C5 * 2 ** (semisFromC5 / 12);
 
 const MASTER = 0.4;
 
+/** Half a second of silence as a WAV data URI (8 kHz, 8-bit mono). */
+function silentWav(): string {
+  const n = 4000;
+  const buf = new Uint8Array(44 + n);
+  const dv = new DataView(buf.buffer);
+  const str = (o: number, t: string) => [...t].forEach((c, i) => (buf[o + i] = c.charCodeAt(0)));
+  str(0, 'RIFF'); dv.setUint32(4, 36 + n, true); str(8, 'WAVE'); str(12, 'fmt ');
+  dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+  dv.setUint32(24, 8000, true); dv.setUint32(28, 8000, true); dv.setUint16(32, 1, true); dv.setUint16(34, 8, true);
+  str(36, 'data'); dv.setUint32(40, n, true);
+  buf.fill(128, 44);
+  let bin = '';
+  buf.forEach((b) => (bin += String.fromCharCode(b)));
+  return `data:audio/wav;base64,${btoa(bin)}`;
+}
+
 // Background music: an upbeat, "racing" 8-bar loop (C G Am F | C G F G) – driving bass,
 // steady drums and a quick arcade-style lead. Cheerful, never aggressive.
 const BPM = 138;
@@ -43,8 +59,36 @@ export class Sfx {
     return this._muted;
   }
 
+  private silentEl: HTMLAudioElement | null = null;
+
+  /**
+   * iOS mutes Web Audio when the ring/silent switch is on, unless the page plays media.
+   * Declare a "playback" audio session (Safari 17+) and keep a silent looping <audio> for older iOS.
+   */
+  private enablePlaybackSession(): void {
+    try {
+      const nav = navigator as Navigator & { audioSession?: { type: string } };
+      if (nav.audioSession) nav.audioSession.type = 'playback';
+    } catch {
+      /* ignore */
+    }
+    if (this.silentEl) return;
+    try {
+      const el = new Audio(silentWav());
+      el.loop = true;
+      el.setAttribute('playsinline', '');
+      this.silentEl = el;
+      void el.play()?.catch(() => {
+        this.silentEl = null; // not allowed yet – try again on the next tap
+      });
+    } catch {
+      /* ignore */
+    }
+  }
+
   /** Call on every user tap: creates the context on first use and resumes it after iOS suspends it. */
   unlock(): void {
+    this.enablePlaybackSession();
     try {
       if (!this.ctx) {
         const Ctor = (window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext) as typeof AudioContext | undefined;
