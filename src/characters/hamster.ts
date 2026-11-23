@@ -7,6 +7,8 @@ const FUR = 0xd99a4e;
 const CREAM = 0xfff1dc;
 const PINK = 0xf4a6b0;
 const BLUSH = 0xff8fa3;
+/** Model is built at ~0.22 m body radius; scaled up a bit so kids see it well. */
+const VISUAL_SCALE = 1.25;
 
 export function angleLerp(a: number, b: number, t: number): number {
   let d = (b - a) % (Math.PI * 2);
@@ -31,6 +33,7 @@ export class Hamster {
   constructor() {
     const k = this.kit;
     this.root.add(this.bob);
+    this.root.scale.setScalar(VISUAL_SCALE);
 
     // body + belly + tail
     this.bob.add(k.ball(0.22, FUR, [0, 0.2, 0], [1, 0.88, 1.1]));
@@ -82,6 +85,12 @@ export class Hamster {
       this.paws.push(paw);
       this.bob.add(paw);
     }
+  }
+
+  /** Instantly face a heading (rotation.y). */
+  face(yaw: number): void {
+    this.yaw = yaw;
+    this.root.rotation.y = yaw;
   }
 
   lookAt(target: THREE.Vector3 | null): void {
