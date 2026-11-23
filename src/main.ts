@@ -10,16 +10,14 @@ import { TouchController } from './input/touch';
 import { idleInput } from './input/types';
 import { FollowCamera } from './world/camera';
 import { OcclusionFader } from './world/occlusion';
-import { Level1Meadow, remainingText } from './levels/level1';
+import { Level1Meadow } from './levels/level1';
+import { LINES, VoiceLines, type LineId } from './audio/voice';
 import { Sfx } from './audio/sfx';
 import { Speech } from './audio/speech';
 import { Flow, type Screen } from './ui/flow';
 import { Screens } from './ui/screens';
 import { showBubble, type Bubble } from './ui/bubble';
 
-const STORY = 'Blíží se zima a křeček potřebuje naplnit spíž. Vydá se na cestu!';
-const INTRO_LINE = 'Ahoj! Pomůžeš mi najít 10 oříšků?';
-const THANKS_LINE = 'Hurá, děkuju!';
 const INTRO_TIME = 2.4;
 const BUBBLE_TIME = 4.5;
 
@@ -45,7 +43,7 @@ resize();
 const touch = new TouchController(canvas);
 const input = new CombinedController([new KeyboardController(window), touch]);
 const sfx = new Sfx();
-const speech = new Speech();
+const voice = new VoiceLines(new Speech());
 const flow = new Flow();
 let muted = storage.get('muted', false);
 sfx.setMuted(muted);
@@ -54,7 +52,7 @@ const screens = new Screens(document.getElementById('ui')!, {
   onToggleMute: () => {
     muted = !muted;
     sfx.setMuted(muted);
-    if (muted) speech.stop();
+    if (muted) voice.stop();
     storage.set('muted', muted);
     return muted;
   },
@@ -92,7 +90,10 @@ function startLevel() {
       flow.complete(stars);
     },
     onNearNpc() {
-      if (phase === 'play') say(remainingText(level.nuts.total - level.nuts.collected));
+      if (phase === 'play') {
+        const left = level.nuts.total - level.nuts.collected;
+        if (left >= 1 && left <= 9) say(`remaining${left}` as LineId);
+      }
     },
     onJump: () => sfx.jump(),
     onStep: () => sfx.step(),
@@ -104,7 +105,8 @@ function startLevel() {
   phase = 'menu';
 }
 
-function say(text: string) {
+function say(id: LineId) {
+  const text = LINES[id];
   bubble?.hide();
   level.npc.wave();
   bubble = showBubble(
@@ -117,12 +119,12 @@ function say(text: string) {
     },
     () => {
       bubbleT = 0;
-      if (!muted) speech.say(text);
+      if (!muted) void voice.say(id);
     },
   );
   bubbleT = 0;
   sfx.chatter(text.length / 4);
-  if (!muted) speech.say(text);
+  if (!muted) void voice.say(id);
 }
 
 function beginIntro() {
@@ -136,7 +138,7 @@ function endIntro() {
   if (phase !== 'intro') return;
   phase = 'play';
   follow.follow();
-  say(INTRO_LINE);
+  say('intro');
 }
 canvas.addEventListener('pointerdown', () => endIntro());
 
@@ -155,12 +157,12 @@ flow.onChange((s) => {
       break;
     case 'story':
       sfx.click();
-      screens.story(STORY, () => {
+      screens.story(LINES.story, () => {
         sfx.click();
-        speech.stop();
+        voice.stop();
         flow.continue();
       });
-      if (!muted) speech.say(STORY);
+      if (!muted) void voice.say('story');
       break;
     case 'playing':
       if (from === 'paused' && !restartOnResume) {
@@ -172,7 +174,7 @@ flow.onChange((s) => {
       beginIntro();
       break;
     case 'paused':
-      speech.stop();
+      voice.stop();
       screens.paused(
         () => flow.resume(),
         () => {
@@ -218,7 +220,7 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     hideTimer = setTimeout(() => {
       if (!document.hidden) return;
-      speech.stop();
+      voice.stop();
       flow.pause();
     }, 600);
   }
@@ -248,7 +250,7 @@ new GameLoop(
       follow.closeup(level.player.rotation.y);
       sfx.fanfare();
       level.npc.hop();
-      say(THANKS_LINE);
+      say('thanks');
     }
 
     follow.update(level.player.position, dt);
