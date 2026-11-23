@@ -63,7 +63,7 @@ screens.setMuted(muted);
 installAudioUnlock(window, () => sfx.unlock());
 
 // --- camera mode: fixed (joystick = screen directions) or behind the hamster (toy-car steering) ---
-let chaseCam = storage.get('camera.chase', false);
+let chaseCam = storage.get('camera.chase', true);
 follow.setChase(chaseCam);
 function toggleCamera(): boolean {
   chaseCam = !chaseCam;
@@ -109,6 +109,13 @@ function startLevel() {
         if (left >= 1 && left <= 9) say(`remaining${left}` as LineId);
       }
     },
+    onCritter(kind, obj) {
+      // one speaker at a time: never interrupt the hedgehog or another quip
+      if (phase !== 'play' || bubble) return;
+      if (kind === 'bee') sfx.buzz();
+      else sfx.flutter();
+      say(pickQuip(kind), obj);
+    },
     onJump: () => sfx.jump(),
     onStep: () => sfx.step(),
   });
@@ -121,15 +128,27 @@ function startLevel() {
   phase = 'menu';
 }
 
-function say(id: LineId) {
+let lastQuip: LineId | null = null;
+function pickQuip(kind: 'bee' | 'butterfly'): LineId {
+  const ids = (Object.keys(LINES) as LineId[]).filter((k) => k.startsWith(kind) && k !== lastQuip);
+  lastQuip = ids[Math.floor(Math.random() * ids.length)];
+  return lastQuip;
+}
+
+/** Shows a speech bubble over `speaker` (the hedgehog by default) and reads the line aloud. */
+function say(id: LineId, speaker?: THREE.Object3D) {
   const text = LINES[id];
   bubble?.hide();
-  level.npc.wave();
+  if (!speaker) level.npc.wave();
+  const who = speaker ?? level.npc.root;
+  const lift = speaker ? 0.35 : 1.05;
   bubble = showBubble(
     screens.bubbleLayer,
     text,
     () => {
-      v.copy(level.npc.root.position).setY(1.05).project(camera);
+      v.copy(who.position);
+      v.y = speaker ? v.y + lift : lift;
+      v.project(camera);
       if (v.z > 1) return null;
       return { x: (v.x * 0.5 + 0.5) * window.innerWidth, y: (-v.y * 0.5 + 0.5) * window.innerHeight };
     },
@@ -139,7 +158,7 @@ function say(id: LineId) {
     },
   );
   bubbleT = 0;
-  sfx.chatter(text.length / 4);
+  if (!speaker) sfx.chatter(text.length / 4);
   if (!muted) void voice.say(id);
 }
 

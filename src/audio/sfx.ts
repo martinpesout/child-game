@@ -120,6 +120,16 @@ export class Sfx {
     for (let i = 0; i < 6; i++) this.crunch(0.25 + i * 0.17);
   }
 
+  /** Friendly bee buzz. */
+  buzz(): void {
+    for (let i = 0; i < 3; i++) this.tone(200 + i * 15, 0.22, 'triangle', 0.09, i * 0.16, 230 + i * 15);
+  }
+
+  /** Light butterfly flutter. */
+  flutter(): void {
+    for (let i = 0; i < 4; i++) this.tone(1900 + Math.random() * 500, 0.06, 'sine', 0.06, i * 0.07, 2600);
+  }
+
   jump(): void {
     this.tone(320, 0.18, 'sine', 0.22, 0, 640);
   }

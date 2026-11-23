@@ -25,6 +25,8 @@ const TREAT_SCALE = 1.8;
 const NPC_NEAR = 1.6;
 const NPC_REPEAT = 8;
 const HEDGEHOG_RADIUS = 0.4;
+const CRITTER_NEAR = 1.5;
+const CRITTER_REPEAT = 10;
 
 export { remainingText } from '../audio/lines';
 
@@ -55,6 +57,7 @@ export class Level1Meadow implements Level {
   private readonly tmp = new THREE.Vector3();
   private hedgehog!: Hedgehog;
   private steerMode = false;
+  private critterCooldown = 0;
   private headingVal = Math.PI;
   private critters!: Critters;
   private npcCooldown = 0;
@@ -103,6 +106,10 @@ export class Level1Meadow implements Level {
     return this.steerMode ? this.headingVal : this.hamster.root.rotation.y;
   }
 
+  get critterObjects(): THREE.Object3D[] {
+    return this.critters.all;
+  }
+
   get npc(): Hedgehog {
     return this.hedgehog;
   }
@@ -121,6 +128,7 @@ export class Level1Meadow implements Level {
     this.hedgehog.root.position.set(d.hedgehog.x, 0, d.hedgehog.z);
     scene.add(this.hedgehog.root);
     this.npcCooldown = 0;
+    this.critterCooldown = 0;
     this.body = { pos: { x: d.spawn.x, y: 0, z: d.spawn.z }, vel: { x: 0, y: 0, z: 0 }, radius: 0.25, grounded: true };
     this.hamster = new Hamster();
     this.hamster.face(Math.PI);
@@ -209,6 +217,16 @@ export class Level1Meadow implements Level {
     this.updateHint(dt, collected);
     this.updateNpc(dt);
     this.critters.update(dt);
+    this.updateCritterChat(dt);
+  }
+
+  private updateCritterChat(dt: number): void {
+    this.critterCooldown = Math.max(0, this.critterCooldown - dt);
+    if (this.critterCooldown > 0 || this.progress.isComplete()) return;
+    const near = this.critters.nearest(this.hamster.root.position, CRITTER_NEAR);
+    if (!near) return;
+    this.critterCooldown = CRITTER_REPEAT;
+    this.events.onCritter?.(near.kind, near.obj);
   }
 
   private updateNpc(dt: number): void {

@@ -22,5 +22,11 @@ export const LINES = {
   remaining7: remainingText(7),
   remaining8: remainingText(8),
   remaining9: remainingText(9),
+  bee1: 'Bzzz! Tahle kytička je moje!',
+  bee2: 'Neboj, neštípu. Jen bzučím!',
+  bee3: 'Bzz bzz! Taky sbírám zásoby na zimu!',
+  butterfly1: 'Jé, ahoj! Máš krásné tvářičky!',
+  butterfly2: 'Chyť mě, jestli to dokážeš!',
+  butterfly3: 'Lítám a lítám, až se mi točí hlava!',
 } as const;
 export type LineId = keyof typeof LINES;

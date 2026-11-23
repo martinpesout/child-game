@@ -57,3 +57,10 @@ it('prime připraví hlas zařízení (volá se z tlačítka Hrát)', () => {
   new VoiceLines(sp, {}, vi.fn()).prime();
   expect(sp.prime).toHaveBeenCalled();
 });
+
+it('včelky i motýli mají aspoň 3 různé hlášky', () => {
+  const bee = Object.keys(LINES).filter((k) => k.startsWith('bee'));
+  const fly = Object.keys(LINES).filter((k) => k.startsWith('butterfly'));
+  expect(bee.length).toBeGreaterThanOrEqual(3);
+  expect(fly.length).toBeGreaterThanOrEqual(3);
+});

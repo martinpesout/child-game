@@ -118,3 +118,21 @@ it('řízení jako autíčko: nahoru běží tam, kam se dívá, dolů couvá be
   expect(Math.abs(Math.atan2(Math.sin(level.player.rotation.y - Math.PI), Math.cos(level.player.rotation.y - Math.PI)))).toBeLessThan(0.05);
   level.dispose();
 });
+
+it('u včelky nebo motýla se ozve hláška, znovu nejdřív po 10 s', () => {
+  const scene = new THREE.Scene();
+  const level = new Level1Meadow();
+  const seen: string[] = [];
+  level.setup(scene, { ...events(), onCritter: (kind) => seen.push(kind) });
+  const pin = () => {
+    const c = level.critterObjects[0];
+    level.player.position.copy(c.position).setY(0);
+    (level as unknown as { body: { pos: { x: number; z: number } } }).body.pos.x = c.position.x;
+    (level as unknown as { body: { pos: { x: number; z: number } } }).body.pos.z = c.position.z;
+  };
+  for (let i = 0; i < 60; i++) { pin(); level.update(1 / 60, { move: { x: 0, y: 0 }, action: false }, 0); }
+  expect(seen).toHaveLength(1);
+  for (let i = 0; i < 10 * 60; i++) { pin(); level.update(1 / 60, { move: { x: 0, y: 0 }, action: false }, 0); }
+  expect(seen).toHaveLength(2);
+  level.dispose();
+});

@@ -82,6 +82,20 @@ export class Critters {
     scene.add(this.root);
   }
 
+  /** Closest critter within `radius` (horizontal distance) of `pos`, or null. */
+  nearest(pos: THREE.Vector3, radius: number): { kind: 'bee' | 'butterfly'; obj: THREE.Object3D } | null {
+    let best: Flyer | null = null;
+    let bestD = radius;
+    for (const f of this.flyers) {
+      const d = Math.hypot(f.obj.position.x - pos.x, f.obj.position.z - pos.z);
+      if (d < bestD) {
+        bestD = d;
+        best = f;
+      }
+    }
+    return best ? { kind: best.kind, obj: best.obj } : null;
+  }
+
   get all(): THREE.Object3D[] {
     return this.flyers.map((f) => f.obj);
   }

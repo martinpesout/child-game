@@ -15,3 +15,14 @@ it('motýli a včelky létají uvnitř louky ve výšce do 2 m a dispose je ukli
   c.dispose();
   expect(scene.children).toHaveLength(0);
 });
+
+it('najde nejbližšího motýla nebo včelku v dosahu křečka', () => {
+  const scene = new THREE.Scene();
+  const c = new Critters(scene, 20, 1, 1);
+  c.update(1 / 60);
+  const bee = c.all[1];
+  const near = c.nearest(new THREE.Vector3(bee.position.x + 0.5, 0, bee.position.z), 1.5);
+  expect(near?.kind).toBe('bee');
+  expect(c.nearest(new THREE.Vector3(500, 0, 500), 1.5)).toBeNull();
+  c.dispose();
+});

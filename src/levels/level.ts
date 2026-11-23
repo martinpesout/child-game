@@ -9,6 +9,8 @@ export interface LevelEvents {
   onJump?(): void;
   /** Each footfall while running (for the pitter-patter sound). */
   onStep?(): void;
+  /** The hamster came close to a bee or butterfly (decorative chatter). */
+  onCritter?(kind: 'bee' | 'butterfly', obj: THREE.Object3D): void;
 }
 
 export interface Level {
