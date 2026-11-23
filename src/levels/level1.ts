@@ -110,8 +110,12 @@ export class Level1Meadow implements Level {
   update(dt: number, input: InputState, cameraYaw: number): void {
     const celebrating = this.progress.isComplete();
     const wish = celebrating ? { x: 0, z: 0 } : cameraRelative(input.move, cameraYaw);
+    const wasGrounded = this.body.grounded;
     stepBody(this.body, wish, !celebrating && input.action, dt, this.world);
+    if (wasGrounded && this.body.vel.y > 0) this.events.onJump?.();
+    const gaitBefore = this.hamster.anim.gaitPhase;
     this.hamster.sync(this.body, dt);
+    if (Math.floor(this.hamster.anim.gaitPhase / Math.PI) !== Math.floor(gaitBefore / Math.PI)) this.events.onStep?.();
     this.meadow.update(this.hamster.root.position);
 
     let collected = false;

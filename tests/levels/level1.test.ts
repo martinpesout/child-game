@@ -4,10 +4,14 @@ import { LEVEL1 } from '../../src/levels/level1Data';
 import type { LevelEvents } from '../../src/levels/level';
 
 const idle = { move: { x: 0, y: 0 }, action: false };
-const events = (): LevelEvents & { collected: string[]; completed: number[] } => {
+const events = (): LevelEvents & { collected: string[]; completed: number[]; jumps: number; steps: number } => {
   const e = {
     collected: [] as string[],
     completed: [] as number[],
+    jumps: 0,
+    steps: 0,
+    onJump: () => e.jumps++,
+    onStep: () => e.steps++,
     onCollect: (k: string) => e.collected.push(k),
     onComplete: (s: number) => e.completed.push(s),
     onNearNpc: () => {},
@@ -53,5 +57,17 @@ it('po sebrání všech oříšků je kolo hotové a onComplete přijde jednou p
   expect(e.completed).toEqual([]);
   for (let i = 0; i < 180; i++) level.update(1 / 60, idle, 0);
   expect(e.completed).toEqual([1]);
+  level.dispose();
+});
+
+it('skok a cupitání vyšlou události pro zvuky', () => {
+  const scene = new THREE.Scene();
+  const level = new Level1Meadow();
+  const e = events();
+  level.setup(scene, e);
+  level.update(1 / 60, { move: { x: 0, y: 0 }, action: true }, 0);
+  expect(e.jumps).toBe(1);
+  for (let i = 0; i < 120; i++) level.update(1 / 60, { move: { x: 1, y: 0 }, action: false }, 0);
+  expect(e.steps).toBeGreaterThan(3);
   level.dispose();
 });

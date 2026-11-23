@@ -27,6 +27,7 @@ export class Hamster {
   private readonly cheeks: THREE.Object3D[] = [];
   private readonly eyes: THREE.Object3D[] = [];
   private readonly paws: THREE.Mesh[] = [];
+  private readonly muzzle = new THREE.Group();
   private lookTarget: THREE.Vector3 | null = null;
   private yaw = 0;
 
@@ -46,8 +47,10 @@ export class Hamster {
     this.head.add(k.ball(0.18, FUR, [0, 0.03, 0], [1.05, 0.95, 0.95]));
     // cream face patch + muzzle
     this.head.add(k.ball(0.12, CREAM, [0, -0.02, 0.08], [1.1, 0.85, 0.9]));
-    this.head.add(k.ball(0.065, CREAM, [0, -0.02, 0.15]));
-    this.head.add(k.ball(0.022, PINK, [0, 0.01, 0.213], [1.2, 0.9, 1], 0.5));
+    this.muzzle.position.set(0, -0.02, 0.15);
+    this.head.add(this.muzzle);
+    this.muzzle.add(k.ball(0.065, CREAM, [0, 0, 0]));
+    this.muzzle.add(k.ball(0.022, PINK, [0, 0.03, 0.063], [1.2, 0.9, 1], 0.5));
     // cheeks (puffable)
     for (const s of [-1, 1]) {
       const cheek = new THREE.Group();
@@ -131,8 +134,12 @@ export class Hamster {
       this.bob.rotation.y = Math.min(1, p * 1.6) * Math.PI * 2;
     }
 
-    const puff = 1 + 0.5 * a.cheekPuff;
-    this.cheeks.forEach((c) => c.scale.setScalar(puff));
+    // full cheeks, pulsing while munching
+    const munch = a.chew;
+    const puff = 1 + 0.5 * a.cheekPuff + (a.chewing ? 0.18 + 0.1 * munch : 0);
+    this.cheeks.forEach((c, i) => c.scale.set(puff, puff * (1 - 0.06 * munch * (i ? 1 : -1)), puff));
+    this.muzzle.position.y = -0.02 - Math.max(0, munch) * 0.012;
+    this.muzzle.scale.set(1 + Math.max(0, -munch) * 0.06, 1 - Math.max(0, munch) * 0.08, 1);
     this.eyes.forEach((e) => (e.scale.y = Math.max(0.1, 1 - a.blink)));
 
     // head turns toward a nearby friend, otherwise gentle idle tilt
@@ -145,6 +152,7 @@ export class Hamster {
     }
     this.head.rotation.y = angleLerp(this.head.rotation.y, headYaw, Math.min(1, dt * 6));
     this.head.rotation.z = a.mood === 'idle' ? Math.sin(a.time * 0.9) * 0.08 : 0;
+    this.head.rotation.x = a.chewing ? -0.05 + munch * 0.04 : 0;
 
     this.root.rotation.y = this.yaw;
   }

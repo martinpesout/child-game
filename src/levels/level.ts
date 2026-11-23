@@ -6,6 +6,9 @@ export interface LevelEvents {
   onCollect(kind: ItemKind, nutsCollected: number, nutsTotal: number): void;
   onComplete(stars: number): void;
   onNearNpc(): void;
+  onJump?(): void;
+  /** Each footfall while running (for the pitter-patter sound). */
+  onStep?(): void;
 }
 
 export interface Level {

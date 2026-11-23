@@ -3,6 +3,9 @@ export type HamsterMood = 'idle' | 'run' | 'air' | 'celebrate';
 const PUFF_TIME = 0.6;
 const CELEBRATE_TIME = 1.2;
 const BLINK_TIME = 0.15;
+const CHEW_TIME = 1.2;
+/** Chews per second. */
+const CHEW_RATE = 6;
 
 /** Pure animation state for the hamster; the mesh reads these values. */
 export class HamsterAnim {
@@ -12,6 +15,10 @@ export class HamsterAnim {
   blink = 0;
   time = 0;
   celebrateProgress = 0;
+  /** -1..1 munching motion while chewing, 0 otherwise. */
+  chew = 0;
+  chewing = false;
+  private chewTimer = 0;
 
   private puffTimer = 0;
   private celebrateTimer = 0;
@@ -37,6 +44,13 @@ export class HamsterAnim {
       this.cheekPuff = this.puffTimer > 0 ? Math.min(1, this.puffTimer / (PUFF_TIME / 2)) : 0;
     }
 
+    if (this.chewTimer > 0) {
+      this.chewTimer -= dt;
+      this.chewing = this.chewTimer > 0;
+      const t = CHEW_TIME - this.chewTimer;
+      this.chew = this.chewing ? Math.sin(t * CHEW_RATE * Math.PI * 2) : 0;
+    }
+
     this.nextBlink -= dt;
     if (this.nextBlink <= 0) {
       this.blinkTimer = BLINK_TIME;
@@ -51,6 +65,8 @@ export class HamsterAnim {
   puffCheeks(): void {
     this.puffTimer = PUFF_TIME;
     this.cheekPuff = 1;
+    this.chewTimer = CHEW_TIME;
+    this.chewing = true;
   }
 
   celebrate(): void {

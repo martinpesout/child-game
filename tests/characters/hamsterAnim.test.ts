@@ -34,3 +34,18 @@ it('gaitPhase běží jen při běhu', () => {
   a.update(0.1, 3, true);
   expect(a.gaitPhase).toBeGreaterThan(0);
 });
+
+it('po sebrání dobroty žvýká asi 1.2 s a pak přestane', () => {
+  const a = new HamsterAnim();
+  a.puffCheeks();
+  let moved = 0;
+  for (let i = 0; i < 30; i++) {
+    a.update(0.016, 0, true);
+    moved = Math.max(moved, Math.abs(a.chew));
+  }
+  expect(a.chewing).toBe(true);
+  expect(moved).toBeGreaterThan(0.5);
+  for (let i = 0; i < 60; i++) a.update(0.016, 0, true);
+  expect(a.chewing).toBe(false);
+  expect(a.chew).toBe(0);
+});
