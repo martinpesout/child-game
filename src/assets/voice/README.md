@@ -1,5 +1,12 @@
 # Nahrávky hlasu
 
+Nejrychleji je vytvoří Mac jeho prémiovým českým hlasem:
+
+1. Nastavení systému → Zpřístupnění → Předčítaný obsah → Systémový hlas → Spravovat hlasy… → Čeština → stáhnout **Zuzana (Prémiový)**.
+2. V projektu spustit `npm run voice` (volby: `--voice "Jméno hlasu"`, `--rate 165`, `--only intro,thanks`).
+
+Vlastní nahrávky (např. namluvené rodiči) stačí uložit sem pod stejnými názvy.
+
 Sem patří nahrané věty (soubor `<id>.m4a`). Když soubor existuje, hra ho přehraje místo hlasu iPadu.
 Formát: `.m4a` (AAC), mono, krátké ticho na začátku i konci odstřihnout.
 

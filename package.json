@@ -7,13 +7,15 @@
     "dev": "vite --host",
     "build": "tsc && vite build",
     "preview": "vite preview --host",
-    "test": "vitest run"
+    "test": "vitest run",
+    "voice": "vite-node scripts/generate-voice.ts"
   },
   "dependencies": {
     "@fontsource/baloo-2": "^5.1.1",
     "three": "^0.170.0"
   },
   "devDependencies": {
+    "@types/node": "^20.17.10",
     "@types/three": "^0.170.0",
     "jsdom": "^25.0.1",
     "typescript": "^5.6.3",

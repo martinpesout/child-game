@@ -25,12 +25,7 @@ const NPC_NEAR = 1.6;
 const NPC_REPEAT = 8;
 const HEDGEHOG_RADIUS = 0.4;
 
-/** "Ještě N oříšků!" with Czech plural forms (1 / 2–4 / 5+). */
-export function remainingText(n: number): string {
-  if (n === 1) return 'Ještě jeden oříšek!';
-  if (n >= 2 && n <= 4) return `Ještě ${n} oříšky!`;
-  return `Ještě ${n} oříšků!`;
-}
+export { remainingText } from '../audio/lines';
 
 interface Treat {
   spot: ItemSpot;
