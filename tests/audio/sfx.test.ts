@@ -100,3 +100,23 @@ it('hudba má 8 taktů a přehraje akordy, melodii i rytmus', () => {
   s.stopMusic();
   vi.useRealTimers();
 });
+
+it('playClip přehraje nahrávku přes odemčený AudioContext a vrátí ovladač pro zastavení', async () => {
+  const s = new Sfx();
+  s.unlock();
+  const ctx = (s as unknown as { ctx: FakeCtx & { decodeAudioData?: unknown } }).ctx;
+  (ctx as unknown as { decodeAudioData: () => Promise<object> }).decodeAudioData = async () => ({});
+  const src = vi.spyOn(ctx, 'createBufferSource');
+  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) })));
+  const h = await s.playClip('voice/intro.m4a');
+  expect(h).not.toBeNull();
+  expect(src).toHaveBeenCalled();
+  expect(() => h!.stop()).not.toThrow();
+});
+
+it('playClip vrátí null, když soubor chybí', async () => {
+  const s = new Sfx();
+  s.unlock();
+  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false })));
+  expect(await s.playClip('voice/none.m4a')).toBeNull();
+});

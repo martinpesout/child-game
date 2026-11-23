@@ -60,6 +60,41 @@ export class Sfx {
     }
   }
 
+  private clips = new Map<string, AudioBuffer | null>();
+
+  /**
+   * Plays a recorded clip through the (already unlocked) AudioContext, so it also works outside a tap on iOS.
+   * Resolves to a handle for stopping it, or null if the clip is missing or can't be decoded.
+   */
+  async playClip(url: string): Promise<{ stop(): void } | null> {
+    const ctx = this.ctx;
+    if (!ctx || !this.master) return null;
+    let buf = this.clips.get(url);
+    if (buf === undefined) {
+      try {
+        const res = await fetch(url);
+        buf = res.ok ? await ctx.decodeAudioData(await res.arrayBuffer()) : null;
+      } catch {
+        buf = null;
+      }
+      this.clips.set(url, buf);
+    }
+    if (!buf) return null;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.master);
+    src.start();
+    return {
+      stop: () => {
+        try {
+          src.stop();
+        } catch {
+          /* already stopped */
+        }
+      },
+    };
+  }
+
   setMuted(m: boolean): void {
     this._muted = m;
     if (this.master) this.master.gain.value = m ? 0 : MASTER;

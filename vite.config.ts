@@ -9,7 +9,7 @@ export default defineConfig({
   plugins: [
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/*.png', 'voice/*.m4a'],
+      includeAssets: ['icons/*.png'],
       manifest: {
         name: 'Křečkova cesta',
         short_name: 'Křeček',

@@ -11,7 +11,8 @@ import { idleInput } from './input/types';
 import { FollowCamera } from './world/camera';
 import { OcclusionFader } from './world/occlusion';
 import { Level1Meadow } from './levels/level1';
-import { LINES, VoiceLines, type LineId } from './audio/voice';
+import { LINES, VoiceLines, bundledClips, type LineId } from './audio/voice';
+import { installAudioUnlock, watchBackground } from './core/background';
 import { Sfx } from './audio/sfx';
 import { Speech } from './audio/speech';
 import { Flow, type Screen } from './ui/flow';
@@ -43,7 +44,8 @@ resize();
 const touch = new TouchController(canvas);
 const input = new CombinedController([new KeyboardController(window), touch]);
 const sfx = new Sfx();
-const voice = new VoiceLines(new Speech());
+const voice = new VoiceLines(new Speech(), bundledClips(), (url) => sfx.playClip(url));
+
 const flow = new Flow();
 let muted = storage.get('muted', false);
 sfx.setMuted(muted);
@@ -58,7 +60,7 @@ const screens = new Screens(document.getElementById('ui')!, {
   },
 });
 screens.setMuted(muted);
-window.addEventListener('pointerdown', () => sfx.unlock(), { capture: true });
+installAudioUnlock(window, () => sfx.unlock());
 
 // --- level -------------------------------------------------------------------
 type Phase = 'menu' | 'intro' | 'play' | 'celebrate';
@@ -200,6 +202,7 @@ flow.onChange((s) => {
 
 function onPlay() {
   sfx.unlock();
+  voice.prime();
   sfx.click();
   sfx.startAmbience();
   sfx.startMusic();
@@ -211,20 +214,16 @@ function onPlay() {
   flow.start();
 }
 
-// Pause when the app really goes to the background (ignore sub-second visibility blips).
-let hideTimer: ReturnType<typeof setTimeout> | null = null;
-document.addEventListener('visibilitychange', () => {
-  input.reset();
-  if (hideTimer) clearTimeout(hideTimer);
-  hideTimer = null;
-  if (document.hidden) {
-    hideTimer = setTimeout(() => {
-      if (!document.hidden) return;
-      voice.stop();
-      flow.pause();
-    }, 600);
-  }
-});
+watchBackground(
+  document,
+  window,
+  () => performance.now(),
+  () => {
+    input.reset();
+    voice.stop();
+  },
+  () => flow.pause(),
+);
 
 // --- main loop ---------------------------------------------------------------
 const portrait = window.matchMedia('(orientation: portrait) and (pointer: coarse)');

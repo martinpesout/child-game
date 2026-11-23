@@ -67,3 +67,11 @@ it('rozpozná i anglické označení Enhanced', () => {
   s.say('Ahoj');
   expect((synth.spoken[0].voice as { name: string }).name).toBe('Zuzana (Enhanced)');
 });
+
+it('prime pošle tichou prázdnou větu (odemčení na iOS)', () => {
+  const synth = fakeSynth([{ lang: 'cs-CZ', name: 'Zuzana' }]);
+  const s = new Speech(synth as unknown as SpeechSynthesis);
+  s.prime();
+  expect(synth.spoken).toHaveLength(1);
+  expect(synth.spoken[0].text).toBe('');
+});

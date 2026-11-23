@@ -34,6 +34,18 @@ export class Speech {
     }
   }
 
+  /** Speak an empty utterance from inside a tap – iOS only allows speech after one started from a gesture. */
+  prime(): void {
+    if (!this.synth) return;
+    try {
+      const u = new SpeechSynthesisUtterance('');
+      u.volume = 0;
+      this.synth.speak(u);
+    } catch {
+      /* ignore */
+    }
+  }
+
   stop(): void {
     try {
       this.synth?.cancel();

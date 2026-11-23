@@ -1,6 +1,6 @@
 # Nahrávky hlasu
 
-Sem patří nahrané věty. Když soubor existuje, hra ho přehraje místo hlasu iPadu.
+Sem patří nahrané věty (soubor `<id>.m4a`). Když soubor existuje, hra ho přehraje místo hlasu iPadu.
 Formát: `.m4a` (AAC), mono, krátké ticho na začátku i konci odstřihnout.
 
 | soubor | věta |
