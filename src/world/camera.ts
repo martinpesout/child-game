@@ -11,22 +11,28 @@ const FOLLOW_RATE = 5;
  */
 export class FollowCamera {
   readonly yaw = 0;
+  private readonly focus = new THREE.Vector3();
   private readonly look = new THREE.Vector3();
+  private initialised = false;
 
   constructor(private readonly cam: THREE.PerspectiveCamera) {}
 
   update(target: THREE.Vector3, dt: number): void {
-    const k = 1 - Math.exp(-FOLLOW_RATE * dt);
-    this.cam.position.x += (target.x - this.cam.position.x) * k;
-    this.cam.position.z += (target.z + DISTANCE - this.cam.position.z) * k;
-    this.cam.position.y += (target.y * 0.6 + HEIGHT - this.cam.position.y) * k;
-    this.look.set(this.cam.position.x, target.y * 0.6 + LOOK_HEIGHT, this.cam.position.z - DISTANCE);
-    this.cam.lookAt(this.look);
+    if (!this.initialised) return this.snap(target);
+    this.focus.lerp(target, 1 - Math.exp(-FOLLOW_RATE * dt));
+    this.place();
   }
 
   snap(target: THREE.Vector3): void {
-    this.cam.position.set(target.x, target.y * 0.6 + HEIGHT, target.z + DISTANCE);
-    this.look.set(target.x, target.y * 0.6 + LOOK_HEIGHT, target.z);
+    this.focus.copy(target);
+    this.initialised = true;
+    this.place();
+  }
+
+  private place(): void {
+    const f = this.focus;
+    this.cam.position.set(f.x, f.y * 0.6 + HEIGHT, f.z + DISTANCE);
+    this.look.set(f.x, f.y * 0.6 + LOOK_HEIGHT, f.z);
     this.cam.lookAt(this.look);
   }
 }

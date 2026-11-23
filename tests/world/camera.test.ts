@@ -19,3 +19,4 @@ it('snap okamžitě skočí na cíl', () => {
   expect(cam.position.x).toBeCloseTo(10);
   expect(cam.position.z).toBeCloseTo(14.5);
 });
+

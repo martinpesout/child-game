@@ -169,59 +169,41 @@ function makeHouse(c: Collider): THREE.Group {
   return shadowy(g);
 }
 
-function makeFence(halfSize: number): THREE.Group {
-  const g = new THREE.Group();
+/** Fence + hedge around the meadow, one group per side so each side can fade on its own. */
+function makeFenceSides(halfSize: number): THREE.Group[] {
   const edge = halfSize + 0.25;
-  const postGeo = new THREE.CylinderGeometry(0.08, 0.09, 1.0, 8);
-  const postMat = mat(0xc28a55);
   const spacing = 1.6;
   const perSide = Math.ceil((edge * 2) / spacing);
-  const posts = new THREE.InstancedMesh(postGeo, postMat, perSide * 4);
-  const m = new THREE.Matrix4();
-  let i = 0;
-  for (let s = 0; s < 4; s++) {
-    for (let k = 0; k < perSide; k++) {
-      const t = -edge + k * spacing;
-      const [x, z] = s === 0 ? [t, -edge] : s === 1 ? [edge, t] : s === 2 ? [-t, edge] : [-edge, -t];
-      m.makeTranslation(x, 0.5, z);
-      posts.setMatrixAt(i++, m);
-    }
-  }
-  g.add(posts);
-  const railMat = mat(0xd9a46d);
-  for (const y of [0.4, 0.8]) {
-    for (let s = 0; s < 4; s++) {
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(edge * 2, 0.08, 0.05), railMat);
-      rail.position.y = y;
-      if (s === 0) rail.position.z = -edge;
-      if (s === 1) { rail.position.x = edge; rail.rotation.y = Math.PI / 2; }
-      if (s === 2) rail.position.z = edge;
-      if (s === 3) { rail.position.x = -edge; rail.rotation.y = Math.PI / 2; }
-      g.add(rail);
-    }
-  }
-  // hedge outside the fence so the world feels closed and soft
+  const postGeo = new THREE.CylinderGeometry(0.08, 0.09, 1.0, 8);
   const hedgeGeo = new THREE.SphereGeometry(1, 12, 8);
-  const hedgeMat = mat(0x4f9a3a);
-  const hedgeCount = perSide * 4;
-  const hedge = new THREE.InstancedMesh(hedgeGeo, hedgeMat, hedgeCount);
   const r = rng(7);
-  i = 0;
+  const m = new THREE.Matrix4();
   const q = new THREE.Quaternion();
   const sc = new THREE.Vector3();
   const p = new THREE.Vector3();
+  const sides: THREE.Group[] = [];
   for (let s = 0; s < 4; s++) {
+    const g = new THREE.Group();
+    // local layout along +X at z = -edge (north side), then rotated into place
+    const posts = new THREE.InstancedMesh(postGeo, mat(0xc28a55), perSide);
+    const hedge = new THREE.InstancedMesh(hedgeGeo, mat(0x4f9a3a), perSide);
     for (let k = 0; k < perSide; k++) {
       const t = -edge + k * spacing;
-      const o = edge + 1.6;
-      const [x, z] = s === 0 ? [t, -o] : s === 1 ? [o, t] : s === 2 ? [-t, o] : [-o, -t];
+      posts.setMatrixAt(k, m.makeTranslation(t, 0.5, -edge));
       const size = 1.2 + r() * 0.6;
-      m.compose(p.set(x, size * 0.5, z), q, sc.set(size, size * 0.9, size));
-      hedge.setMatrixAt(i++, m);
+      hedge.setMatrixAt(k, m.compose(p.set(t, size * 0.5, -edge - 1.6), q, sc.set(size, size * 0.9, size)));
     }
+    g.add(posts, hedge);
+    const railMat = mat(0xd9a46d);
+    for (const y of [0.4, 0.8]) {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(edge * 2, 0.08, 0.05), railMat);
+      rail.position.set(0, y, -edge);
+      g.add(rail);
+    }
+    g.rotation.y = (s * Math.PI) / 2;
+    sides.push(g);
   }
-  g.add(hedge);
-  return g;
+  return sides;
 }
 
 function makeHills(): THREE.Group {
@@ -355,7 +337,10 @@ export function buildMeadow(scene: THREE.Scene, data: LevelData): Meadow {
     root.add(o);
     occluders.push(o);
   }
-  root.add(makeFence(data.halfSize));
+  for (const side of makeFenceSides(data.halfSize)) {
+    root.add(side);
+    occluders.push(side);
+  }
   root.add(makeHills());
 
   const hemi = new THREE.HemisphereLight(0xffffff, 0x7fae5a, 1.15);
