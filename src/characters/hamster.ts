@@ -52,8 +52,9 @@ export class Hamster {
     for (const s of [-1, 1]) {
       const cheek = new THREE.Group();
       cheek.position.set(s * 0.115, -0.04, 0.07);
-      cheek.add(k.ball(0.085, CREAM, [0, 0, 0], [1, 0.9, 1]));
-      cheek.add(k.ball(0.03, BLUSH, [s * 0.04, 0.015, 0.06], [1, 0.7, 0.4], 0.6));
+      const cheekBall = k.ball(0.085, CREAM, [0, 0, 0], [1, 0.9, 1]);
+      cheek.add(cheekBall);
+      k.spot(cheekBall, 0.085, 0.38, BLUSH, [s * 0.55, 0.05, 0.83]);
       this.head.add(cheek);
       this.cheeks.push(cheek);
     }

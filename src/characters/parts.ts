@@ -31,17 +31,45 @@ export class PartKit {
     return g;
   }
 
-  /** Glossy black bead eye with a white highlight. */
+  /**
+   * Paints a round spot onto a sphere of radius `r` (centred at the parent's origin): a thin spherical cap
+   * that hugs the surface, so it reads as a painted mark rather than a bump.
+   * `angle` is the spot's angular radius, `dir` points from the centre to the spot.
+   */
+  spot(parent: THREE.Object3D, r: number, angle: number, color: number, dir: [number, number, number], unlit = false): THREE.Mesh {
+    const g = this.geom(new THREE.SphereGeometry(r * 1.008, 20, 6, 0, Math.PI * 2, 0, angle));
+    const m = unlit ? this.basic(color) : this.mat(color, 0.8);
+    const mesh = new THREE.Mesh(g, m);
+    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(...dir).normalize());
+    parent.add(mesh);
+    return mesh;
+  }
+
+  private basics = new Map<number, THREE.MeshBasicMaterial>();
+  basic(color: number): THREE.MeshBasicMaterial {
+    let m = this.basics.get(color);
+    if (!m) {
+      m = new THREE.MeshBasicMaterial({ color });
+      this.basics.set(color, m);
+    }
+    return m;
+  }
+
+  /** Glossy black bead eye with a painted-on white highlight. */
   eye(r: number): THREE.Group {
     const g = new THREE.Group();
-    g.add(this.ball(r, 0x1a1210, [0, 0, 0], [1, 1, 1], 0.15));
-    g.add(this.ball(r * 0.35, 0xffffff, [r * 0.35, r * 0.4, r * 0.75], [1, 1, 1], 0.3));
+    const ball = this.ball(r, 0x1a1210, [0, 0, 0], [1, 1, 1], 0.15);
+    g.add(ball);
+    this.spot(ball, r, 0.42, 0xffffff, [0.4, 0.5, 0.77], true);
+    this.spot(ball, r, 0.18, 0xffffff, [-0.3, -0.25, 0.92], true);
     return g;
   }
 
   dispose(): void {
     this.geoms.forEach((g) => g.dispose());
     this.mats.forEach((m) => m.dispose());
+    this.basics.forEach((m) => m.dispose());
+    this.basics.clear();
     this.geoms = [];
     this.mats.clear();
   }

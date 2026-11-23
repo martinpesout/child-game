@@ -47,6 +47,13 @@ new GameLoop(
     follow.update(hamster.root.position, dt);
     meadow.update(hamster.root.position);
   },
-  () => renderer.render(scene, camera),
+  () => {
+    if (location.search.includes('closeup')) {
+      hamster.face(0);
+      camera.position.set(body.pos.x + 0.25, 0.7, body.pos.z + 1.1);
+      camera.lookAt(body.pos.x, 0.4, body.pos.z);
+    }
+    renderer.render(scene, camera);
+  },
 ).start();
 Object.assign(window, { __body: body });
