@@ -6,25 +6,25 @@ const note = (semisFromC5: number) => C5 * 2 ** (semisFromC5 / 12);
 
 const MASTER = 0.4;
 
-// Background music: a gentle 8-bar music-box song (C G Am F | C G F G) with soft pad, bass and percussion.
-const BPM = 104;
+// Background music: an upbeat, "racing" 8-bar loop (C G Am F | C G F G) – driving bass,
+// steady drums and a quick arcade-style lead. Cheerful, never aggressive.
+const BPM = 138;
 const EIGHTH = 60 / BPM / 2;
-const SWING = 0.12; // off-beats a touch late for a bouncy feel
 const CHORDS = [
   [0, 4, 7], [-5, -1, 2], [-3, 0, 4], [-7, -3, 0],
   [0, 4, 7], [-5, -1, 2], [-7, -3, 0], [-5, -1, 2],
 ];
 const MELODY: (number | null)[] = [
-  7, null, 4, null, 7, 9, 7, null,
-  2, null, -1, null, 2, 4, 2, null,
-  0, null, 4, null, 9, null, 7, 4,
-  5, null, 4, null, 2, null, 0, null,
-  7, null, 12, null, 11, 9, 7, null,
-  2, null, 7, null, 11, null, 9, 7,
-  9, null, 5, null, 4, 2, 0, null,
-  2, null, 4, 2, -1, null, 0, null,
+  0, 4, 7, 12, 7, 4, 7, null,
+  2, 7, 11, 14, 11, 7, 11, null,
+  0, 4, 9, 12, 9, 4, 9, null,
+  5, 9, 12, 9, 7, 5, 4, 2,
+  12, null, 12, 11, 12, null, 7, null,
+  14, null, 14, 12, 11, null, 7, null,
+  9, 12, 9, 7, 5, 7, 9, 12,
+  11, null, 7, null, 14, null, 11, null,
 ];
-const MUSIC_VOL = 0.75;
+const MUSIC_VOL = 0.7;
 const LOOKAHEAD = 0.25;
 
 export class Sfx {
@@ -150,11 +150,11 @@ export class Sfx {
     lp.type = 'lowpass';
     lp.frequency.value = 3800;
     const delay = ctx.createDelay(1);
-    delay.delayTime.value = EIGHTH * 3;
+    delay.delayTime.value = EIGHTH * 1.5;
     const fb = ctx.createGain();
-    fb.gain.value = 0.28;
+    fb.gain.value = 0.2;
     const wet = ctx.createGain();
-    wet.gain.value = 0.22;
+    wet.gain.value = 0.12;
     bus.connect(lp);
     lp.connect(this.master);
     lp.connect(delay);
@@ -167,33 +167,27 @@ export class Sfx {
 
   private musicNote(step: number, t: number): void {
     const bus = this.musicBus ?? undefined;
-    const bar = Math.floor(step / 8);
-    const chord = CHORDS[bar % CHORDS.length];
+    const chord = CHORDS[Math.floor(step / 8) % CHORDS.length];
     const inBar = step % 8;
-    if (inBar % 2 === 1) t += EIGHTH * SWING;
+    const root = chord[0];
 
-    // soft pad: whole-bar chord
-    if (inBar === 0) for (const n of chord) this.toneAt(t, note(n - 12), EIGHTH * 8.5, 'triangle', 0.018, undefined, bus, 0.25);
-    // bouncy bass: root on 1, fifth on 3, passing note before the next bar
-    if (inBar === 0) this.toneAt(t, note(chord[0] - 24), EIGHTH * 2.5, 'sine', 0.11, undefined, bus);
-    if (inBar === 4) this.toneAt(t, note(chord[2] - 24), EIGHTH * 2.5, 'sine', 0.09, undefined, bus);
-    if (inBar === 6) this.toneAt(t, note(chord[1] - 24), EIGHTH * 1.5, 'sine', 0.06, undefined, bus);
-    // music-box sparkle on off-beats
-    if (inBar % 2 === 1) this.musicBox(t, note(chord[(inBar >> 1) % 3] + 12), 0.022, bus);
-    // melody
+    // driving bass: octave "pump" on every eighth
+    this.toneAt(t, note(root - (inBar % 2 === 0 ? 24 : 12)), EIGHTH * 0.9, 'triangle', 0.075, undefined, bus, 0.005);
+    // quiet chord stab on the off-beats keeps the energy up
+    if (inBar % 2 === 1) for (const n of chord) this.toneAt(t, note(n), EIGHTH * 0.6, 'triangle', 0.012, undefined, bus, 0.005);
+    // lead: bright arcade voice (triangle body + a little square bite through the low-pass)
     const m = MELODY[step];
-    if (m !== null) this.musicBox(t, note(m), 0.085, bus);
-    // light percussion: soft kick on beats 1 and 3, shaker on off-beats
-    if (inBar === 0 || inBar === 4) this.toneAt(t, 140, 0.12, 'sine', 0.09, 45, bus);
-    if (inBar % 2 === 1) this.noiseHit(t, 7000, 0.035, 0.012, bus);
+    if (m !== null) {
+      this.toneAt(t, note(m), EIGHTH * 1.1, 'triangle', 0.07, undefined, bus, 0.005);
+      this.toneAt(t, note(m), EIGHTH * 0.9, 'square', 0.012, undefined, bus, 0.005);
+    }
+    // drums: kick on every beat, clap on 2 and 4, hi-hat on the off-beats
+    if (inBar % 2 === 0) this.toneAt(t, 150, 0.11, 'sine', 0.12, 42, bus, 0.002);
+    if (inBar === 2 || inBar === 6) this.noiseHit(t, 1900, 0.11, 0.05, bus);
+    if (inBar % 2 === 1) this.noiseHit(t, 8000, 0.03, 0.016, bus);
   }
 
-  /** Music-box tone: pure sine with a soft bell overtone and quick decay. */
-  private musicBox(t: number, f: number, vol: number, dest?: AudioNode): void {
-    this.toneAt(t, f, EIGHTH * 3, 'sine', vol, undefined, dest);
-    this.toneAt(t, f * 2.01, EIGHTH * 1.2, 'sine', vol * 0.35, undefined, dest);
-    this.toneAt(t, f * 3.98, EIGHTH * 0.5, 'sine', vol * 0.1, undefined, dest);
-  }
+
 
   /** Soft bird chirps in the background. */
   startAmbience(): void {
