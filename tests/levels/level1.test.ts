@@ -102,3 +102,19 @@ it('ježek je překážka – křeček jím neprojde', () => {
   expect(level.player.position.x).toBeGreaterThan(LEVEL1.hedgehog.x + 0.4);
   level.dispose();
 });
+
+it('řízení jako autíčko: nahoru běží tam, kam se dívá, dolů couvá bez otočení', () => {
+  const scene = new THREE.Scene();
+  const level = new Level1Meadow();
+  level.setup(scene, events());
+  level.steering = true;
+  const z0 = level.player.position.z;
+  for (let i = 0; i < 30; i++) level.update(1 / 60, { move: { x: 0, y: 1 }, action: false }, 0);
+  expect(level.player.position.z).toBeLessThan(z0 - 0.3); // starts facing -Z (heading π)
+  expect(level.heading).toBeCloseTo(Math.PI);
+  const z1 = level.player.position.z;
+  for (let i = 0; i < 30; i++) level.update(1 / 60, { move: { x: 0, y: -1 }, action: false }, 0);
+  expect(level.player.position.z).toBeGreaterThan(z1 + 0.1);
+  expect(Math.abs(Math.atan2(Math.sin(level.player.rotation.y - Math.PI), Math.cos(level.player.rotation.y - Math.PI)))).toBeLessThan(0.05);
+  level.dispose();
+});

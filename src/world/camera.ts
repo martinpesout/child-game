@@ -10,13 +10,17 @@ const CLOSE_SIDE = 0.35;
 const CLOSE_HEIGHT = 0.75;
 const CLOSE_LOOK = 0.45;
 const BLEND_RATE = 2.5;
+/** How fast the chase camera swings round behind the hamster. */
+const CHASE_TURN_RATE = 3;
 
 /**
  * Smooth third-person camera with a fixed heading (always looks towards -Z).
  * A fixed heading keeps "joystick up" meaning the same direction for young kids.
  */
 export class FollowCamera {
-  readonly yaw = 0;
+  private chase = false;
+  private heading = 0;
+  private chaseYaw = 0;
   private readonly focus = new THREE.Vector3();
   private readonly look = new THREE.Vector3();
   private initialised = false;
@@ -30,6 +34,22 @@ export class FollowCamera {
   private readonly lb = new THREE.Vector3();
 
   constructor(private readonly cam: THREE.PerspectiveCamera) {}
+
+  /** Camera yaw used to map the joystick: fixed 0, or behind the hamster in chase mode. */
+  get yaw(): number {
+    return this.chase ? this.chaseYaw : 0;
+  }
+
+  /** Chase mode: the camera stays behind the hamster and turns with it. */
+  setChase(on: boolean): void {
+    this.chase = on;
+    this.chaseYaw = this.heading + Math.PI;
+  }
+
+  /** Hamster heading (rotation.y) the chase camera should sit behind. */
+  setHeading(h: number): void {
+    this.heading = h;
+  }
 
   /** Frame the hamster's face; `faceYaw` is the hamster's heading (rotation.y). */
   closeup(faceYaw: number): void {
@@ -48,6 +68,12 @@ export class FollowCamera {
   update(target: THREE.Vector3, dt: number): void {
     if (!this.initialised) return this.snap(target);
     this.focus.lerp(target, 1 - Math.exp(-FOLLOW_RATE * dt));
+    if (this.chase) {
+      let d = this.heading + Math.PI - this.chaseYaw;
+      d = Math.atan2(Math.sin(d), Math.cos(d));
+      this.chaseYaw += d * (1 - Math.exp(-CHASE_TURN_RATE * dt));
+      this.chaseYaw = Math.atan2(Math.sin(this.chaseYaw), Math.cos(this.chaseYaw));
+    }
     const want = this.mode === 'closeup' ? 1 : 0;
     this.blend += (want - this.blend) * (1 - Math.exp(-BLEND_RATE * dt));
     if (Math.abs(this.blend - want) < 0.001) this.blend = want;
@@ -57,6 +83,7 @@ export class FollowCamera {
   /** Jump straight to the current mode's framing. */
   cut(target: THREE.Vector3): void {
     this.focus.copy(target);
+    this.chaseYaw = Math.atan2(Math.sin(this.heading + Math.PI), Math.cos(this.heading + Math.PI));
     this.initialised = true;
     this.blend = this.mode === 'closeup' ? 1 : 0;
     this.place();
@@ -64,13 +91,16 @@ export class FollowCamera {
 
   snap(target: THREE.Vector3): void {
     this.focus.copy(target);
+    this.chaseYaw = Math.atan2(Math.sin(this.heading + Math.PI), Math.cos(this.heading + Math.PI));
     this.initialised = true;
     this.place();
   }
 
   private place(): void {
     const f = this.focus;
-    this.a.set(f.x, f.y * 0.6 + HEIGHT, f.z + DISTANCE);
+    const yaw = this.yaw;
+    // behind the camera's forward (-sin, -cos) means +(sin, cos)
+    this.a.set(f.x + Math.sin(yaw) * DISTANCE, f.y * 0.6 + HEIGHT, f.z + Math.cos(yaw) * DISTANCE);
     this.la.set(f.x, f.y * 0.6 + LOOK_HEIGHT, f.z);
     if (this.blend > 0) {
       const sy = Math.sin(this.faceYaw);

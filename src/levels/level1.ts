@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { InputState } from '../input/types';
 import { cameraRelative } from '../input/combine';
+import { steer } from '../input/steer';
 import { stepBody, type Body, type PhysicsWorld } from '../physics/physics';
 import { Hamster } from '../characters/hamster';
 import { Hedgehog } from '../characters/hedgehog';
@@ -53,6 +54,8 @@ export class Level1Meadow implements Level {
   private completedFired = false;
   private readonly tmp = new THREE.Vector3();
   private hedgehog!: Hedgehog;
+  private steerMode = false;
+  private headingVal = Math.PI;
   private critters!: Critters;
   private npcCooldown = 0;
 
@@ -85,6 +88,21 @@ export class Level1Meadow implements Level {
     return this.meadow.occluders;
   }
 
+  /** "Toy car" steering (for the camera-behind mode) instead of camera-relative movement. */
+  get steering(): boolean {
+    return this.steerMode;
+  }
+
+  set steering(on: boolean) {
+    this.steerMode = on;
+    if (this.hamster) this.headingVal = this.hamster.root.rotation.y;
+  }
+
+  /** Direction the hamster faces (rotation.y). */
+  get heading(): number {
+    return this.steerMode ? this.headingVal : this.hamster.root.rotation.y;
+  }
+
   get npc(): Hedgehog {
     return this.hedgehog;
   }
@@ -106,6 +124,7 @@ export class Level1Meadow implements Level {
     this.body = { pos: { x: d.spawn.x, y: 0, z: d.spawn.z }, vel: { x: 0, y: 0, z: 0 }, radius: 0.25, grounded: true };
     this.hamster = new Hamster();
     this.hamster.face(Math.PI);
+    this.headingVal = Math.PI;
     this.hamster.sync(this.body, 0);
     scene.add(this.hamster.root);
 
@@ -131,12 +150,20 @@ export class Level1Meadow implements Level {
 
   update(dt: number, input: InputState, cameraYaw: number): void {
     const celebrating = this.progress.isComplete();
-    const wish = celebrating ? { x: 0, z: 0 } : cameraRelative(input.move, cameraYaw);
+    let wish = { x: 0, z: 0 };
+    if (!celebrating) {
+      if (this.steerMode) {
+        const r = steer(input.move, this.headingVal, dt);
+        this.headingVal = r.heading;
+        wish = r.wish;
+      } else wish = cameraRelative(input.move, cameraYaw);
+    }
     const wasGrounded = this.body.grounded;
     stepBody(this.body, wish, !celebrating && input.action, dt, this.world);
     if (wasGrounded && this.body.vel.y > 0) this.events.onJump?.();
     const gaitBefore = this.hamster.anim.gaitPhase;
     this.hamster.sync(this.body, dt);
+    if (this.steerMode && !celebrating) this.hamster.face(this.headingVal);
     if (Math.floor(this.hamster.anim.gaitPhase / Math.PI) !== Math.floor(gaitBefore / Math.PI)) this.events.onStep?.();
     this.meadow.update(this.hamster.root.position);
 

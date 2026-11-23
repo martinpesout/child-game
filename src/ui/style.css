@@ -180,3 +180,5 @@ html, body { font-family: 'Baloo 2', ui-rounded, system-ui, sans-serif; }
 .rotate-icon { font-size: 90px; animation: turn 2s ease-in-out infinite; }
 @keyframes turn { 0%, 30% { rotate: 0deg; } 60%, 100% { rotate: -90deg; } }
 @media (orientation: portrait) and (pointer: coarse) { .rotate { display: flex; } }
+
+.btn.small { font-size: clamp(18px, 2.4vw, 24px); min-height: 52px; background: #f1e6d2; }

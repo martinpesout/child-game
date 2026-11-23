@@ -97,9 +97,13 @@ export class Screens {
     this.setPlaying(true);
   }
 
-  paused(onResume: () => void, onRetry: () => void): void {
+  paused(onResume: () => void, onRetry: () => void, chase: boolean, onToggleCamera: () => boolean): void {
     const card = el('div', 'card');
-    card.append(el('h2', '', 'Pauza'), button('Hrát dál', 'big', onResume), button('Znovu', '', onRetry));
+    const label = (c: boolean) => (c ? 'Kamera: za křečkem' : 'Kamera: pevná');
+    const cam = button(label(chase), 'small', () => {
+      cam.textContent = label(onToggleCamera());
+    });
+    card.append(el('h2', '', 'Pauza'), button('Hrát dál', 'big', onResume), button('Znovu', '', onRetry), cam);
     this.show('dim', [card]);
   }
 

@@ -62,6 +62,18 @@ const screens = new Screens(document.getElementById('ui')!, {
 screens.setMuted(muted);
 installAudioUnlock(window, () => sfx.unlock());
 
+// --- camera mode: fixed (joystick = screen directions) or behind the hamster (toy-car steering) ---
+let chaseCam = storage.get('camera.chase', false);
+follow.setChase(chaseCam);
+function toggleCamera(): boolean {
+  chaseCam = !chaseCam;
+  storage.set('camera.chase', chaseCam);
+  level.steering = chaseCam;
+  follow.setHeading(level.heading);
+  follow.setChase(chaseCam);
+  return chaseCam;
+}
+
 // --- level -------------------------------------------------------------------
 type Phase = 'menu' | 'intro' | 'play' | 'celebrate';
 let phase: Phase = 'menu';
@@ -101,6 +113,8 @@ function startLevel() {
     onStep: () => sfx.step(),
   });
   fader = new OcclusionFader(level.occluders);
+  level.steering = chaseCam;
+  follow.setHeading(level.heading);
   screens.resetHud();
   follow.closeup(Math.PI);
   follow.cut(level.player.position);
@@ -183,6 +197,8 @@ flow.onChange((s) => {
           restartOnResume = true;
           flow.resume();
         },
+        chaseCam,
+        toggleCamera,
       );
       break;
     case 'levelEnd': {
@@ -252,6 +268,7 @@ new GameLoop(
       say('thanks');
     }
 
+    follow.setHeading(level.heading);
     follow.update(level.player.position, dt);
     fader.update(camera.position, level.player.position, dt);
     screens.updateControls(touch.joystickView, active && state.action);
