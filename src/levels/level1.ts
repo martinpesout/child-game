@@ -8,6 +8,7 @@ import { PartKit } from '../characters/parts';
 import { buildMeadow, type Meadow } from '../world/meadow';
 import { makeTreat } from '../world/treats';
 import { Confetti, HintSparkle } from '../world/effects';
+import { Critters } from '../world/critters';
 import { LEVEL1, type ItemSpot } from './level1Data';
 import { HintTimer, Progress } from './progress';
 import type { Level, LevelEvents } from './level';
@@ -57,6 +58,7 @@ export class Level1Meadow implements Level {
   private completedFired = false;
   private readonly tmp = new THREE.Vector3();
   private hedgehog!: Hedgehog;
+  private critters!: Critters;
   private npcCooldown = 0;
 
   constructor(private readonly data: LevelData = LEVEL1) {}
@@ -101,6 +103,7 @@ export class Level1Meadow implements Level {
       colliders: [...d.colliders, { kind: 'cylinder', x: d.hedgehog.x, z: d.hedgehog.z, radius: HEDGEHOG_RADIUS, height: 1 }],
       bounds: { halfSize: d.halfSize },
     };
+    this.critters = new Critters(scene, d.halfSize);
     this.hedgehog = new Hedgehog();
     this.hedgehog.root.position.set(d.hedgehog.x, 0, d.hedgehog.z);
     scene.add(this.hedgehog.root);
@@ -183,6 +186,7 @@ export class Level1Meadow implements Level {
 
     this.updateHint(dt, collected);
     this.updateNpc(dt);
+    this.critters.update(dt);
   }
 
   private updateNpc(dt: number): void {
@@ -209,6 +213,7 @@ export class Level1Meadow implements Level {
     this.meadow.dispose();
     this.hamster.dispose();
     this.hedgehog.dispose();
+    this.critters.dispose();
     this.treats.forEach((t) => t.root.removeFromParent());
     this.treats = [];
     this.kit.dispose();

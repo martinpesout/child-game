@@ -15,7 +15,7 @@ export class Confetti {
   private readonly one = new THREE.Vector3(1, 1, 1);
 
   constructor(center: THREE.Vector3, count = 120) {
-    this.mesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.08, 0.12), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }), count);
+    this.mesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.05, 0.075), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }), count);
     const c = new THREE.Color();
     for (let i = 0; i < count; i++) {
       const a = Math.random() * Math.PI * 2;

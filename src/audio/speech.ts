@@ -25,8 +25,9 @@ export class Speech {
       const u = new SpeechSynthesisUtterance(text);
       u.voice = this.voice;
       u.lang = 'cs-CZ';
-      u.rate = 0.95;
-      u.pitch = 1.15;
+      // slightly slower and only a touch higher: friendly without the "chipmunk robot" effect
+      u.rate = 0.9;
+      u.pitch = 1.05;
       this.synth.speak(u);
     } catch {
       /* ignore */
@@ -42,7 +43,9 @@ export class Speech {
   }
 
   private pickVoice(): void {
-    const voices = this.synth?.getVoices() ?? [];
-    this.voice = voices.find((v) => v.lang.toLowerCase().replace('_', '-').startsWith('cs')) ?? null;
+    const voices = (this.synth?.getVoices() ?? []).filter((v) => v.lang.toLowerCase().replace('_', '-').startsWith('cs'));
+    // Downloaded high-quality voices sound far less robotic: Premium > Enhanced > default.
+    const score = (v: SpeechSynthesisVoice) => (/prémi|premium/i.test(v.name) ? 2 : /vylepš|enhanced/i.test(v.name) ? 1 : 0);
+    this.voice = voices.sort((a, b) => score(b) - score(a))[0] ?? null;
   }
 }

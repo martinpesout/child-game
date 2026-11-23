@@ -49,3 +49,21 @@ it('bez speechSynthesis je available false', () => {
   expect(s.available).toBe(false);
   expect(() => s.say('Ahoj')).not.toThrow();
 });
+
+it('dává přednost vylepšenému/prémiovému českému hlasu', () => {
+  const synth = fakeSynth([
+    { lang: 'cs-CZ', name: 'Zuzana' },
+    { lang: 'cs-CZ', name: 'Zuzana (Prémiový)' },
+    { lang: 'cs-CZ', name: 'Zuzana (Vylepšený)' },
+  ]);
+  const s = new Speech(synth as unknown as SpeechSynthesis);
+  s.say('Ahoj');
+  expect((synth.spoken[0].voice as { name: string }).name).toBe('Zuzana (Prémiový)');
+});
+
+it('rozpozná i anglické označení Enhanced', () => {
+  const synth = fakeSynth([{ lang: 'cs-CZ', name: 'Zuzana' }, { lang: 'cs-CZ', name: 'Zuzana (Enhanced)' }]);
+  const s = new Speech(synth as unknown as SpeechSynthesis);
+  s.say('Ahoj');
+  expect((synth.spoken[0].voice as { name: string }).name).toBe('Zuzana (Enhanced)');
+});

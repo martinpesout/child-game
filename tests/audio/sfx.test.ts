@@ -15,6 +15,7 @@ class FakeCtx {
   createGain() { return new FakeGain(); }
   createBiquadFilter() { return Object.assign(new FakeNode(), { type: 'lowpass', frequency: new FakeParam(), Q: new FakeParam() }); }
   createBuffer() { return { getChannelData: () => new Float32Array(10) }; }
+  createDelay() { return Object.assign(new FakeNode(), { delayTime: new FakeParam() }); }
   createBufferSource() { return Object.assign(new FakeNode(), { buffer: null, start() {}, stop() {} }); }
 }
 
@@ -68,4 +69,34 @@ it('chroupání při žvýkání hraje jen když není ztlumeno', () => {
   s.setMuted(false);
   s.munch();
   expect(spy).toHaveBeenCalled();
+});
+
+it('hudba na pozadí plánuje tóny a ztlumení je zastaví', () => {
+  vi.useFakeTimers();
+  const s = new Sfx();
+  s.unlock();
+  s.startMusic();
+  vi.advanceTimersByTime(500);
+  const playing = FakeCtx.oscillators;
+  expect(playing).toBeGreaterThan(0);
+  s.setMuted(true);
+  vi.advanceTimersByTime(2000);
+  expect(FakeCtx.oscillators).toBe(playing);
+  s.stopMusic();
+  vi.useRealTimers();
+});
+
+it('hudba má 8 taktů a přehraje akordy, melodii i rytmus', () => {
+  vi.useFakeTimers();
+  const s = new Sfx();
+  s.unlock();
+  const ctx = (s as unknown as { ctx: FakeCtx }).ctx;
+  const noise = vi.spyOn(ctx, 'createBufferSource');
+  // advance music clock through one whole loop
+  s.startMusic();
+  for (let i = 0; i < 300; i++) { ctx.currentTime += 0.1; vi.advanceTimersByTime(100); }
+  expect(noise).toHaveBeenCalled(); // shaker / percussion
+  expect((s as unknown as { musicLoops: number }).musicLoops).toBeGreaterThanOrEqual(1);
+  s.stopMusic();
+  vi.useRealTimers();
 });

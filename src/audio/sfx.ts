@@ -6,12 +6,38 @@ const note = (semisFromC5: number) => C5 * 2 ** (semisFromC5 / 12);
 
 const MASTER = 0.4;
 
+// Background music: a gentle 8-bar music-box song (C G Am F | C G F G) with soft pad, bass and percussion.
+const BPM = 104;
+const EIGHTH = 60 / BPM / 2;
+const SWING = 0.12; // off-beats a touch late for a bouncy feel
+const CHORDS = [
+  [0, 4, 7], [-5, -1, 2], [-3, 0, 4], [-7, -3, 0],
+  [0, 4, 7], [-5, -1, 2], [-7, -3, 0], [-5, -1, 2],
+];
+const MELODY: (number | null)[] = [
+  7, null, 4, null, 7, 9, 7, null,
+  2, null, -1, null, 2, 4, 2, null,
+  0, null, 4, null, 9, null, 7, 4,
+  5, null, 4, null, 2, null, 0, null,
+  7, null, 12, null, 11, 9, 7, null,
+  2, null, 7, null, 11, null, 9, 7,
+  9, null, 5, null, 4, 2, 0, null,
+  2, null, 4, 2, -1, null, 0, null,
+];
+const MUSIC_VOL = 0.75;
+const LOOKAHEAD = 0.25;
+
 export class Sfx {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private _muted = false;
   private ambienceTimer: ReturnType<typeof setTimeout> | null = null;
   private ambienceOn = false;
+  private musicTimer: ReturnType<typeof setInterval> | null = null;
+  private musicStep = 0;
+  private musicNext = 0;
+  private musicBus: GainNode | null = null;
+  musicLoops = 0;
 
   get muted(): boolean {
     return this._muted;
@@ -86,6 +112,89 @@ export class Sfx {
     this.tone(880, 0.06, 'sine', 0.15, 0, 660);
   }
 
+  /** Quiet looping background melody. */
+  startMusic(): void {
+    if (this.musicTimer || !this.ctx) return;
+    this.ensureMusicBus();
+    this.musicStep = 0;
+    this.musicLoops = 0;
+    this.musicNext = this.ctx.currentTime + 0.1;
+    const tick = () => {
+      const ctx = this.ctx;
+      if (!ctx) return;
+      // after a long pause (backgrounded tab) don't try to catch up
+      if (this.musicNext < ctx.currentTime) this.musicNext = ctx.currentTime + 0.05;
+      while (this.musicNext < ctx.currentTime + LOOKAHEAD) {
+        this.musicNote(this.musicStep, this.musicNext);
+        this.musicStep = (this.musicStep + 1) % MELODY.length;
+        if (this.musicStep === 0) this.musicLoops++;
+        this.musicNext += EIGHTH;
+      }
+    };
+    tick();
+    this.musicTimer = setInterval(tick, 100);
+  }
+
+  stopMusic(): void {
+    if (this.musicTimer) clearInterval(this.musicTimer);
+    this.musicTimer = null;
+  }
+
+  /** Music bus: soft low-pass + a little echo, so the music sits gently behind the effects. */
+  private ensureMusicBus(): void {
+    const ctx = this.ctx;
+    if (!ctx || !this.master || this.musicBus) return;
+    const bus = ctx.createGain();
+    bus.gain.value = MUSIC_VOL;
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 3800;
+    const delay = ctx.createDelay(1);
+    delay.delayTime.value = EIGHTH * 3;
+    const fb = ctx.createGain();
+    fb.gain.value = 0.28;
+    const wet = ctx.createGain();
+    wet.gain.value = 0.22;
+    bus.connect(lp);
+    lp.connect(this.master);
+    lp.connect(delay);
+    delay.connect(fb);
+    fb.connect(delay);
+    delay.connect(wet);
+    wet.connect(this.master);
+    this.musicBus = bus;
+  }
+
+  private musicNote(step: number, t: number): void {
+    const bus = this.musicBus ?? undefined;
+    const bar = Math.floor(step / 8);
+    const chord = CHORDS[bar % CHORDS.length];
+    const inBar = step % 8;
+    if (inBar % 2 === 1) t += EIGHTH * SWING;
+
+    // soft pad: whole-bar chord
+    if (inBar === 0) for (const n of chord) this.toneAt(t, note(n - 12), EIGHTH * 8.5, 'triangle', 0.018, undefined, bus, 0.25);
+    // bouncy bass: root on 1, fifth on 3, passing note before the next bar
+    if (inBar === 0) this.toneAt(t, note(chord[0] - 24), EIGHTH * 2.5, 'sine', 0.11, undefined, bus);
+    if (inBar === 4) this.toneAt(t, note(chord[2] - 24), EIGHTH * 2.5, 'sine', 0.09, undefined, bus);
+    if (inBar === 6) this.toneAt(t, note(chord[1] - 24), EIGHTH * 1.5, 'sine', 0.06, undefined, bus);
+    // music-box sparkle on off-beats
+    if (inBar % 2 === 1) this.musicBox(t, note(chord[(inBar >> 1) % 3] + 12), 0.022, bus);
+    // melody
+    const m = MELODY[step];
+    if (m !== null) this.musicBox(t, note(m), 0.085, bus);
+    // light percussion: soft kick on beats 1 and 3, shaker on off-beats
+    if (inBar === 0 || inBar === 4) this.toneAt(t, 140, 0.12, 'sine', 0.09, 45, bus);
+    if (inBar % 2 === 1) this.noiseHit(t, 7000, 0.035, 0.012, bus);
+  }
+
+  /** Music-box tone: pure sine with a soft bell overtone and quick decay. */
+  private musicBox(t: number, f: number, vol: number, dest?: AudioNode): void {
+    this.toneAt(t, f, EIGHTH * 3, 'sine', vol, undefined, dest);
+    this.toneAt(t, f * 2.01, EIGHTH * 1.2, 'sine', vol * 0.35, undefined, dest);
+    this.toneAt(t, f * 3.98, EIGHTH * 0.5, 'sine', vol * 0.1, undefined, dest);
+  }
+
   /** Soft bird chirps in the background. */
   startAmbience(): void {
     if (this.ambienceOn) return;
@@ -113,6 +222,12 @@ export class Sfx {
   private noise: AudioBuffer | null = null;
 
   private crunch(delay: number): void {
+    if (!this.ctx) return;
+    this.noiseHit(this.ctx.currentTime + delay, 1400 + Math.random() * 900, 0.07, 0.22);
+  }
+
+  /** Short filtered noise burst (crunch, shaker). */
+  private noiseHit(t0: number, freq: number, dur: number, vol: number, dest?: AudioNode): void {
     const ctx = this.ctx;
     if (!ctx || !this.master || this._muted || ctx.state !== 'running') return;
     if (!this.noise) {
@@ -121,38 +236,41 @@ export class Sfx {
       const d = this.noise.getChannelData(0);
       for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
     }
-    const t0 = ctx.currentTime + delay;
     const src = ctx.createBufferSource();
     src.buffer = this.noise;
     const f = ctx.createBiquadFilter();
     f.type = 'bandpass';
-    f.frequency.setValueAtTime(1400 + Math.random() * 900, t0);
+    f.frequency.setValueAtTime(freq, t0);
     f.Q.setValueAtTime(1.2, t0);
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, t0);
-    g.gain.linearRampToValueAtTime(0.22, t0 + 0.008);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.07);
+    g.gain.linearRampToValueAtTime(vol, t0 + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
     src.connect(f);
     f.connect(g);
-    g.connect(this.master);
+    g.connect(dest ?? this.master);
     src.start(t0);
-    src.stop(t0 + 0.09);
+    src.stop(t0 + dur + 0.02);
   }
 
   private tone(freq: number, dur: number, type: OscillatorType, vol: number, delay = 0, slideTo?: number): void {
+    if (!this.ctx) return;
+    this.toneAt(this.ctx.currentTime + delay, freq, dur, type, vol, slideTo);
+  }
+
+  private toneAt(t0: number, freq: number, dur: number, type: OscillatorType, vol: number, slideTo?: number, dest?: AudioNode, attack = 0.015): void {
     const ctx = this.ctx;
     if (!ctx || !this.master || this._muted || ctx.state !== 'running') return;
-    const t0 = ctx.currentTime + delay;
     const osc = ctx.createOscillator();
     const g = ctx.createGain();
     osc.type = type;
     osc.frequency.setValueAtTime(freq, t0);
     if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
     g.gain.setValueAtTime(0.0001, t0);
-    g.gain.linearRampToValueAtTime(vol, t0 + Math.min(0.015, dur / 3));
+    g.gain.linearRampToValueAtTime(vol, t0 + Math.min(attack, dur / 3));
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
     osc.connect(g);
-    g.connect(this.master);
+    g.connect(dest ?? this.master);
     osc.start(t0);
     osc.stop(t0 + dur + 0.02);
     osc.onended = () => g.disconnect();
