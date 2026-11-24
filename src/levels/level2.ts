@@ -27,6 +27,7 @@ export class Level2Garden extends LevelBase {
   private runner!: SquirrelRunner;
   private wheel!: ReturnType<typeof makeWheel>;
   private wheelPos = new THREE.Vector3();
+  private wheelCollider!: Collider;
   private arrow!: THREE.Group;
   private t = 0;
   private cheerCooldown = 0;
@@ -53,6 +54,16 @@ export class Level2Garden extends LevelBase {
     return this.runner.s;
   }
 
+  /** Side view of the hamster wheel for the finish (camera looks along the wheel's axle). */
+  get finishShot(): { from: THREE.Vector3; at: THREE.Vector3 } | null {
+    if (this.finishT < 0) return null;
+    const ry = this.wheel.root.rotation.y;
+    const axleX = Math.cos(ry);
+    const axleZ = -Math.sin(ry);
+    const at = new THREE.Vector3(this.wheelPos.x, 0.75, this.wheelPos.z);
+    return { from: new THREE.Vector3(at.x + axleX * 3.6, 1.5, at.z + axleZ * 3.6), at };
+  }
+
   get npc(): Squirrel {
     return this.squirrel;
   }
@@ -77,7 +88,8 @@ export class Level2Garden extends LevelBase {
     }
     const end = course.pointAt(course.length);
     this.wheelPos.set(end.x, 0, end.z);
-    colliders.push({ kind: 'cylinder', x: end.x, z: end.z, radius: 0.6, height: 2.2 });
+    this.wheelCollider = { kind: 'cylinder', x: end.x, z: end.z, radius: 0.6, height: 2.2 };
+    colliders.push(this.wheelCollider);
 
     const view = buildWorld(scene, {
       halfSize: LEVEL2.halfSize,
@@ -165,6 +177,8 @@ export class Level2Garden extends LevelBase {
 
   protected onCelebrate(): void {
     this.finishT = 0;
+    // the hamster hops *into* the wheel, so its solid stand must not push it out
+    this.physics.colliders = this.physics.colliders.filter((c) => c !== this.wheelCollider);
     this.finishFrom.set(this.body.pos.x, this.body.pos.y, this.body.pos.z);
     this.squirrel.cheer();
     this.say('l2finish', true);
@@ -292,12 +306,14 @@ export class Level2Garden extends LevelBase {
     this.body.pos.z = this.finishFrom.z + (seat.z - this.finishFrom.z) * e;
     this.body.pos.y = Math.sin(k * Math.PI) * 0.6 + this.wheel.seat.y * k;
     // keep the running animation going, facing along the wheel's rolling direction
-    const dir = this.wheel.root.rotation.y - Math.PI / 2;
+    // the wheel rolls along its local Z, so the hamster faces along the wheel's yaw
+    const dir = this.wheel.root.rotation.y;
     this.body.vel.x = Math.sin(dir) * 2.5;
     this.body.vel.z = Math.cos(dir) * 2.5;
     this.body.vel.y = 0;
     this.body.grounded = true;
-    if (k >= 1) this.wheel.spin(dt, -6);
+    this.hamster.root.position.set(this.body.pos.x, this.body.pos.y, this.body.pos.z);
+    if (k >= 1) this.wheel.spin(dt, 6); // bottom of the wheel moves backwards under the running hamster
   }
 }
 

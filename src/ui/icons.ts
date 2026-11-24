@@ -1,7 +1,7 @@
 import type { ItemKind } from '../levels/level1Data';
 
 /** Small inline SVG icons used in the HUD and screens. */
-export const ICONS: Record<ItemKind | 'star' | 'sound' | 'mute' | 'pause' | 'jump', string> = {
+export const ICONS: Record<ItemKind | 'star' | 'sound' | 'mute' | 'pause' | 'jump' | 'hoop' | 'lock' | 'hamster', string> = {
   nut: '<svg viewBox="0 0 40 40"><ellipse cx="20" cy="24" rx="12" ry="13" fill="#b5743d"/><ellipse cx="20" cy="15" rx="13" ry="7" fill="#e9c48f"/><circle cx="20" cy="8.5" r="2.5" fill="#7a4a26"/><ellipse cx="15" cy="26" rx="3" ry="5" fill="#c98a52" opacity=".6"/></svg>',
   strawberry: '<svg viewBox="0 0 40 40"><path d="M20 37C10 30 6 22 8 15c2-5 8-6 12-4 4-2 10-1 12 4 2 7-2 15-12 22z" fill="#e8344a"/><path d="M12 10l4 3 4-5 4 5 4-3-2 5H14z" fill="#4caf50"/><g fill="#fff3a0"><circle cx="15" cy="20" r="1.2"/><circle cx="24" cy="19" r="1.2"/><circle cx="19" cy="26" r="1.2"/><circle cx="26" cy="26" r="1.2"/><circle cx="14" cy="27" r="1.2"/></g></svg>',
   carrot: '<svg viewBox="0 0 40 40"><path d="M9 33L28 14c3 3 3 7 0 10L13 35c-2 1-5 0-4-2z" fill="#ff8c2b"/><path d="M27 13c0-5 3-8 6-8-1 3-1 5-3 7 3-1 6 0 7 2-3 1-6 1-8 1z" fill="#4caf50"/></svg>',
@@ -10,5 +10,8 @@ export const ICONS: Record<ItemKind | 'star' | 'sound' | 'mute' | 'pause' | 'jum
   sound: '<svg viewBox="0 0 40 40"><path d="M8 15h6l8-7v24l-8-7H8z" fill="currentColor"/><path d="M27 13c3 4 3 10 0 14M31 9c5 6 5 16 0 22" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/></svg>',
   mute: '<svg viewBox="0 0 40 40"><path d="M8 15h6l8-7v24l-8-7H8z" fill="currentColor"/><path d="M27 15l9 10M36 15l-9 10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>',
   pause: '<svg viewBox="0 0 40 40"><rect x="11" y="9" width="6" height="22" rx="2" fill="currentColor"/><rect x="23" y="9" width="6" height="22" rx="2" fill="currentColor"/></svg>',
+  hoop: '<svg viewBox="0 0 40 40"><circle cx="20" cy="18" r="13" fill="none" stroke="#ffc93c" stroke-width="5"/><circle cx="20" cy="18" r="13" fill="none" stroke="#ff6b8b" stroke-width="5" stroke-dasharray="6 8"/><path d="M11 31l-3 6M29 31l3 6" stroke="#8a5a3c" stroke-width="3" stroke-linecap="round"/></svg>',
+  lock: '<svg viewBox="0 0 40 40"><rect x="9" y="18" width="22" height="17" rx="4" fill="#b8a48a"/><path d="M14 18v-5a6 6 0 0112 0v5" stroke="#8a7560" stroke-width="4" fill="none"/><circle cx="20" cy="26" r="3" fill="#6b5a48"/></svg>',
+  hamster: '<svg viewBox="0 0 40 40"><circle cx="11" cy="11" r="5" fill="#d99a4e"/><circle cx="29" cy="11" r="5" fill="#d99a4e"/><ellipse cx="20" cy="22" rx="15" ry="14" fill="#d99a4e"/><ellipse cx="20" cy="27" rx="11" ry="8" fill="#fff1dc"/><circle cx="15" cy="20" r="2.6" fill="#1a1210"/><circle cx="25" cy="20" r="2.6" fill="#1a1210"/><ellipse cx="20" cy="25" rx="2" ry="1.5" fill="#f4a6b0"/><ellipse cx="10" cy="27" rx="3" ry="2" fill="#ff8fa3"/><ellipse cx="30" cy="27" rx="3" ry="2" fill="#ff8fa3"/></svg>',
   jump: '<svg viewBox="0 0 40 40"><path d="M20 8l11 12h-7v12h-8V20H9z" fill="currentColor" stroke-linejoin="round"/></svg>',
 };

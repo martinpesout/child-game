@@ -1,45 +1,65 @@
 import { Flow } from '../../src/ui/flow';
 
-it('title → story → playing → levelEnd → comingSoon', () => {
-  const f = new Flow();
+const flowWith = (playable: number[] = [1, 2]) => new Flow((n) => playable.includes(n));
+
+it('title → map → story(2) → playing → levelEnd → next → comingSoon', () => {
+  const f = flowWith();
   const seen: string[] = [];
   f.onChange((s) => seen.push(s));
   f.start();
+  f.pick(2);
   f.continue();
   f.complete(2);
   f.next();
-  expect(seen).toEqual(['story', 'playing', 'levelEnd', 'comingSoon']);
+  expect(seen).toEqual(['map', 'story', 'playing', 'levelEnd', 'comingSoon']);
+  expect(f.current).toBe(2);
   expect(f.lastStars).toBe(2);
 });
 
-it('retry z levelEnd vrátí playing', () => {
-  const f = new Flow();
-  f.start(); f.continue(); f.complete(1);
+it('konec kola 1 → Dál → příběh kola 2', () => {
+  const f = flowWith();
+  f.start(); f.pick(1); f.continue(); f.complete(3);
+  f.next();
+  expect(f.screen).toBe('story');
+  expect(f.current).toBe(2);
+});
+
+it('retry z levelEnd vrátí playing stejného kola', () => {
+  const f = flowWith();
+  f.start(); f.pick(1); f.continue(); f.complete(1);
   f.retry();
   expect(f.screen).toBe('playing');
+  expect(f.current).toBe(1);
 });
 
-it('z comingSoon jde zpět na začátek', () => {
-  const f = new Flow();
-  f.start(); f.continue(); f.complete(1); f.next();
-  f.home();
-  expect(f.screen).toBe('title');
+it('na mapu jde z pauzy, konce kola i z „už brzy“', () => {
+  for (const setup of [
+    (f: Flow) => { f.continue(); f.pause(); },
+    (f: Flow) => { f.continue(); f.complete(1); },
+    (f: Flow) => { f.continue(); f.complete(1); f.next(); f.next(); },
+  ]) {
+    const f = flowWith([1]);
+    f.start(); f.pick(1);
+    setup(f);
+    f.toMap();
+    expect(f.screen).toBe('map');
+  }
 });
 
-it('neplatné přechody ignoruje', () => {
-  const f = new Flow();
-  f.complete(3);
-  f.retry();
-  f.continue();
-  expect(f.screen).toBe('title');
+it('zamčené nebo nehotové kolo z mapy nejde spustit', () => {
+  const f = flowWith([1]);
+  f.start();
+  f.pick(2);
+  expect(f.screen).toBe('map');
+  f.pick(1);
+  expect(f.screen).toBe('story');
 });
 
-it('pause/resume jen ze hry a do hry', () => {
-  const f = new Flow();
-  f.pause();
+it('neplatné přechody ignoruje; pauza jen ze hry', () => {
+  const f = flowWith();
+  f.complete(3); f.retry(); f.continue(); f.pause();
   expect(f.screen).toBe('title');
-  f.start(); f.continue();
-  f.pause();
+  f.start(); f.pick(1); f.continue(); f.pause();
   expect(f.screen).toBe('paused');
   f.resume();
   expect(f.screen).toBe('playing');

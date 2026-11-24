@@ -48,3 +48,16 @@ it('kamera za křečkem: stojí za ním ve směru jeho pohledu a otáčí se s n
   // stick "up" must mean the hamster's forward
   expect(f.yaw).toBeCloseTo(-Math.PI / 2, 1);
 });
+
+it('záběr z daného místa: kamera dojede na pozici a dívá se na cíl', () => {
+  const cam = new THREE.PerspectiveCamera();
+  const f = new FollowCamera(cam);
+  f.snap(new THREE.Vector3(0, 0, 0));
+  f.shot(new THREE.Vector3(5, 2, 0), new THREE.Vector3(0, 0.5, 0));
+  for (let i = 0; i < 300; i++) f.update(new THREE.Vector3(0, 0, 0), 1 / 60);
+  expect(cam.position.x).toBeCloseTo(5, 1);
+  expect(cam.position.y).toBeCloseTo(2, 1);
+  const fwd = new THREE.Vector3();
+  cam.getWorldDirection(fwd);
+  expect(fwd.x).toBeLessThan(-0.9);
+});

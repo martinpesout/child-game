@@ -98,3 +98,30 @@ it('dvojí setup/dispose (Znovu) nechá stejný počet objektů a brány začnou
   expect(b.goal.total).toBe(8);
   b.dispose();
 });
+
+it('v cíli křeček běží v kole po směru otáčení a kolo nabízí záběr z boku', () => {
+  const scene = new THREE.Scene();
+  const l = new Level2Garden();
+  l.setup(scene, events());
+  driveTo(l, inner(l).course.length);
+  for (let i = 0; i < 3 * 60; i++) l.update(1 / 60, idle, 0);
+  const shot = l.finishShot!;
+  expect(shot).toBeTruthy();
+  // camera looks at the wheel across its axis: the hamster's heading is perpendicular to the view
+  const vx = shot.at.x - shot.from.x;
+  const vz = shot.at.z - shot.from.z;
+  const h = l.player.rotation.y;
+  expect(Math.abs((Math.sin(h) * vx + Math.cos(h) * vz) / Math.hypot(vx, vz))).toBeLessThan(0.2);
+  l.dispose();
+});
+
+it('v cíli křeček sedí uprostřed kola (nevytlačí ho kolize kola)', () => {
+  const scene = new THREE.Scene();
+  const l = new Level2Garden();
+  l.setup(scene, events());
+  driveTo(l, inner(l).course.length);
+  for (let i = 0; i < 3 * 60; i++) l.update(1 / 60, idle, 0);
+  const end = inner(l).course.pointAt(inner(l).course.length);
+  expect(Math.hypot(l.player.position.x - end.x, l.player.position.z - end.z)).toBeLessThan(0.15);
+  l.dispose();
+});

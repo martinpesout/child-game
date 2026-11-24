@@ -24,7 +24,8 @@ function button(label: string, cls: string, onTap: () => void): HTMLButtonElemen
 export class Screens {
   private readonly panel: HTMLDivElement;
   private readonly hud: HTMLDivElement;
-  private readonly nutSlots: HTMLDivElement[] = [];
+  private goalSlots: HTMLDivElement[] = [];
+  private readonly goalBar: HTMLDivElement;
   private readonly bonusSlots = new Map<ItemKind, HTMLDivElement>();
   private readonly controls: HTMLDivElement;
   private readonly stickBase: HTMLDivElement;
@@ -44,11 +45,8 @@ export class Screens {
 
     this.hud = el('div', 'hud hidden');
     const nuts = el('div', 'slots nuts');
-    for (let i = 0; i < 10; i++) {
-      const s = el('div', 'slot', ICONS.nut);
-      nuts.appendChild(s);
-      this.nutSlots.push(s);
-    }
+    this.goalBar = nuts;
+    this.setGoal('nut', 10);
     const bonus = el('div', 'slots bonus');
     for (const k of BONUS_ORDER) {
       const s = el('div', 'slot', ICONS[k]);
@@ -80,6 +78,29 @@ export class Screens {
     this.muteBtn.innerHTML = m ? ICONS.mute : ICONS.sound;
   }
 
+  /** Level map: a winding trail of levels with stars, locks and the hamster at the furthest one. */
+  map(levels: { id: number; name: string; ready: boolean }[], progress: { isUnlocked(n: number): boolean; best(n: number): number; current(): number }, onPick: (id: number) => void): void {
+    this.setPlaying(false);
+    const trail = el('div', 'trail');
+    // the hamster waits at the furthest level that can actually be played
+    const here = Math.max(...levels.filter((l) => l.ready && progress.isUnlocked(l.id)).map((l) => l.id));
+    levels.forEach((lv, i) => {
+      const open = lv.ready && progress.isUnlocked(lv.id);
+      const stop = el('button', `stop ${open ? 'open' : 'locked'} ${i % 2 ? 'low' : 'high'}`);
+      stop.setAttribute('aria-label', lv.name);
+      const badge = el('div', 'badge', open ? `<span>${lv.id}</span>` : ICONS.lock);
+      if (open && here === lv.id) badge.appendChild(el('div', 'here', ICONS.hamster));
+      const stars = el('div', 'mini-stars');
+      for (let k = 0; k < 3; k++) stars.appendChild(el('div', `mini-star ${k < progress.best(lv.id) ? 'on' : ''}`, ICONS.star));
+      stop.append(badge, el('div', 'stop-name', lv.ready ? lv.name : `${lv.name}<small>už brzy</small>`), open ? stars : el('div', ''));
+      if (open) stop.addEventListener('click', (e) => { e.stopPropagation(); onPick(lv.id); });
+      trail.appendChild(stop);
+    });
+    const card = el('div', 'map-card');
+    card.append(el('h2', '', 'Kam se křeček vydá?'), trail);
+    this.show('dim', [card]);
+  }
+
   title(onPlay: () => void): void {
     this.setPlaying(false);
     this.show('title-screen', [el('h1', 'game-title', 'Křečkova<br>cesta'), button('Hrát', 'big', onPlay)]);
@@ -97,17 +118,19 @@ export class Screens {
     this.setPlaying(true);
   }
 
-  paused(onResume: () => void, onRetry: () => void, chase: boolean, onToggleCamera: () => boolean): void {
+  paused(onResume: () => void, onRetry: () => void, chase: boolean, onToggleCamera: () => boolean, onMap: () => void): void {
     const card = el('div', 'card');
     const label = (c: boolean) => (c ? 'Kamera: za křečkem' : 'Kamera: pevná');
     const cam = button(label(chase), 'small', () => {
       cam.textContent = label(onToggleCamera());
     });
-    card.append(el('h2', '', 'Pauza'), button('Hrát dál', 'big', onResume), button('Znovu', '', onRetry), cam);
+    const row = el('div', 'row');
+    row.append(button('Znovu', '', onRetry), button('Mapa', '', onMap));
+    card.append(el('h2', '', 'Pauza'), button('Hrát dál', 'big', onResume), row, cam);
     this.show('dim', [card]);
   }
 
-  levelEnd(stars: number, onRetry: () => void, onNext: () => void): void {
+  levelEnd(stars: number, onRetry: () => void, onNext: () => void, onMap: () => void): void {
     this.setPlaying(false);
     const card = el('div', 'card end');
     const row = el('div', 'stars');
@@ -117,25 +140,38 @@ export class Screens {
       row.appendChild(s);
     }
     const btns = el('div', 'row');
-    btns.append(button('Znovu', '', onRetry), button('Dál', 'big', onNext));
+    btns.append(button('Znovu', '', onRetry), button('Mapa', '', onMap), button('Dál', 'big', onNext));
     card.append(el('h2', '', 'Hurá!'), row, btns);
     this.show('dim', [card]);
   }
 
   comingSoon(onHome: () => void): void {
     const card = el('div', 'card');
-    card.append(el('h2', '', 'Další dobrodružství už brzy!'), button('Zpět na začátek', 'big', onHome));
+    card.append(el('h2', '', 'Další dobrodružství už brzy!'), button('Zpět na mapu', 'big', onHome));
     this.show('dim', [card]);
   }
 
+  /** Goal row in the HUD: `total` outlines of the goal icon (nuts, hoops…). */
+  setGoal(icon: string, total: number): void {
+    this.goalBar.replaceChildren();
+    this.goalSlots = Array.from({ length: total }, () => {
+      const s = el('div', 'slot', ICONS[icon as keyof typeof ICONS] ?? ICONS.nut);
+      this.goalBar.appendChild(s);
+      return s;
+    });
+  }
+
   resetHud(): void {
-    this.nutSlots.forEach((s) => s.classList.remove('filled'));
+    this.goalSlots.forEach((s) => s.classList.remove('filled'));
     this.bonusSlots.forEach((s) => s.classList.remove('filled'));
   }
 
-  fill(kind: ItemKind, nutIndex: number): void {
-    const slot = kind === 'nut' ? this.nutSlots[nutIndex] : this.bonusSlots.get(kind);
-    slot?.classList.add('filled');
+  fillGoal(index: number): void {
+    this.goalSlots[index]?.classList.add('filled');
+  }
+
+  fillBonus(kind: ItemKind): void {
+    this.bonusSlots.get(kind)?.classList.add('filled');
   }
 
   updateControls(view: { active: boolean; origin: { x: number; y: number }; knob: { x: number; y: number } }, action: boolean): void {
