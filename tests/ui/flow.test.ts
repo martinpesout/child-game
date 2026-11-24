@@ -64,3 +64,14 @@ it('neplatné přechody ignoruje; pauza jen ze hry', () => {
   f.resume();
   expect(f.screen).toBe('playing');
 });
+
+it('kolo 2 → Dál → příběh kola 3; po kole 3 „už brzy“', () => {
+  const f = flowWith([1, 2, 3]);
+  f.start(); f.pick(2); f.continue(); f.complete(2);
+  f.next();
+  expect(f.screen).toBe('story');
+  expect(f.current).toBe(3);
+  f.continue(); f.complete(3);
+  f.next();
+  expect(f.screen).toBe('comingSoon');
+});

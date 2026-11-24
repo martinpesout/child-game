@@ -179,6 +179,19 @@ export class Sfx {
     this.tone(500, 0.25, 'sine', 0.05, 0.22, 360);
   }
 
+  /** Frog "ribbit": two quick croaks falling in pitch. */
+  croak(): void {
+    for (let i = 0; i < 2; i++) {
+      this.tone(330, 0.11, 'sawtooth', 0.07, i * 0.16, 190);
+      this.tone(165, 0.11, 'square', 0.04, i * 0.16, 110);
+    }
+  }
+
+  /** "Plop" of a lily pad starting to sink. */
+  plop(): void {
+    this.tone(600, 0.15, 'sine', 0.2, 0, 150);
+  }
+
   /** Friendly bee buzz. */
   buzz(): void {
     for (let i = 0; i < 3; i++) this.tone(200 + i * 15, 0.22, 'triangle', 0.09, i * 0.16, 230 + i * 15);

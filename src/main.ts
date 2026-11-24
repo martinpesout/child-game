@@ -125,9 +125,13 @@ function startLevel(id = levelId) {
       }
     },
     onFriendSay(id, obj) {
-      if (phase === 'play' || phase === 'celebrate') say(id, obj, 1.0);
+      if (phase !== 'play' && phase !== 'celebrate') return;
+      if (levelId === 3) sfx.croak();
+      say(id, obj, levelId === 3 ? 0.8 : 1.0);
     },
     onSplash: () => sfx.splash(),
+    onSink: () => sfx.plop(),
+    onRespawn: () => screens.fade(),
     onCritter(kind, obj) {
       // one speaker at a time: never interrupt a friend or another quip
       if (phase !== 'play' || bubble) return;
@@ -329,6 +333,7 @@ new GameLoop(
       }
     }
     follow.setHeading(level.heading);
+    follow.setSideBias((level as { cameraBias?: number }).cameraBias ?? 0);
     follow.update(level.player.position, dt);
     fader.update(camera.position, level.player.position, dt);
     screens.updateControls(touch.joystickView, active && state.action);

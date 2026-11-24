@@ -37,3 +37,10 @@ it('věty 2. kola: příběh vypráví vypravěč, ostatní veverka', () => {
   expect(speakerFor('l2intro')).toBe('squirrel');
   expect(speakerFor('l2finish')).toBe('squirrel');
 });
+
+it('kolo 3: příběh čte vypravěč, ostatní žabka s vlastním hlasem', () => {
+  expect(speakerFor('l3story')).toBe('narrator');
+  expect(speakerFor('l3intro')).toBe('frog');
+  expect(speakerFor('l3laugh2')).toBe('frog');
+  expect(voiceIdFor('frog', { ELEVENLABS_VOICE_FROG: 'f1', ELEVENLABS_VOICE: 'x' })).toBe('f1');
+});

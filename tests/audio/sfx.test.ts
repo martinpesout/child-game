@@ -192,3 +192,23 @@ it('duck ztiší hudbu na třetinu a pak ji vrátí', () => {
   s.stopMusic();
   vi.useRealTimers();
 });
+
+it('kvákání a žbluňk: ztlumeno nic, jinak zvuk', () => {
+  const s = new Sfx();
+  s.unlock();
+  s.setMuted(true);
+  s.croak();
+  s.plop();
+  expect(FakeCtx.oscillators).toBe(0);
+  s.setMuted(false);
+  s.croak();
+  const afterCroak = FakeCtx.oscillators;
+  expect(afterCroak).toBeGreaterThan(0);
+  s.plop();
+  expect(FakeCtx.oscillators).toBeGreaterThan(afterCroak);
+});
+
+it('kvákání bez AudioContextu nespadne', () => {
+  const s = new Sfx();
+  expect(() => { s.croak(); s.plop(); }).not.toThrow();
+});

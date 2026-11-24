@@ -202,3 +202,8 @@ html, body { font-family: 'Baloo 2', ui-rounded, system-ui, sans-serif; }
 .mini-stars { display: flex; gap: 2px; }
 .mini-star { width: clamp(18px, 2.4vw, 26px); color: #e8dcc8; }
 .mini-star.on { color: var(--sun); }
+
+/* short dip to dark after falling into the water */
+.fader { position: absolute; inset: 0; background: #0b2a3a; opacity: 0; pointer-events: none; }
+.fader.on { animation: dip 0.45s ease-out; }
+@keyframes dip { 0% { opacity: 0; } 33% { opacity: 0.5; } 100% { opacity: 0; } }

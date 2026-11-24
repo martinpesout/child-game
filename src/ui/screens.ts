@@ -33,6 +33,7 @@ export class Screens {
   private readonly jumpBtn: HTMLDivElement;
   private readonly muteBtn: HTMLButtonElement;
   readonly bubbleLayer: HTMLDivElement;
+  private readonly fader: HTMLDivElement;
 
   constructor(root: HTMLElement, handlers: { onPause: () => void; onToggleMute: () => boolean }) {
     this.bubbleLayer = el('div', 'layer');
@@ -71,7 +72,8 @@ export class Screens {
 
     this.panel = el('div', 'panel');
     const rotate = el('div', 'rotate', '<div class="rotate-icon">📱</div><p>Otoč tablet</p>');
-    root.append(this.controls, this.hud, this.bubbleLayer, this.panel, rotate);
+    this.fader = el('div', 'fader');
+    root.append(this.controls, this.hud, this.bubbleLayer, this.fader, this.panel, rotate);
   }
 
   setMuted(m: boolean): void {
@@ -143,6 +145,13 @@ export class Screens {
     btns.append(button('Znovu', '', onRetry), button('Mapa', '', onMap), button('Dál', 'big', onNext));
     card.append(el('h2', '', 'Hurá!'), row, btns);
     this.show('dim', [card]);
+  }
+
+  /** Short dip to dark (e.g. when the hamster is put back after a splash). */
+  fade(): void {
+    this.fader.classList.remove('on');
+    void this.fader.offsetWidth; // restart the animation
+    this.fader.classList.add('on');
   }
 
   comingSoon(onHome: () => void): void {
