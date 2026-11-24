@@ -46,5 +46,16 @@ export const LINES = {
   l3hint: 'Rozběhni se a skoč dřív!',
   l3lily: 'Pozor, lekníny se potápí! Skákej rychle!',
   l3finish: 'Kvák! Jsi skokan jako já! Tady je tvoje jahoda.',
+  l4story: 'Pod velkým stromem bydlí krtek. Schoval tam spoustu pokladů!',
+  l4intro: 'Ahoj! Pomůžeš mi vyhrabat poklady? Hrabej tlapkou!',
+  l4cheer1: 'Hurá, poklad!',
+  l4cheer2: 'Ty jsi ale šikovný hrabáček!',
+  l4hole: 'Zalez dovnitř, vyhrabeš se k pokladům!',
+  l4worm: 'Ahoj, kopáči! Sluníčko je nahoře!',
+  l4stone: 'Kamínek nejde, zkus to jinudy.',
+  l4chest: 'Ta truhla je moc těžká, i pro krtka!',
+  l4beetle: 'Chrrr… Cože? Kdo mě budí? No nic, dobrou!',
+  l4dino: 'Cvak cvak! Neboj, to je jen stará kostra.',
+  l4finish: 'Děkuju, kamaráde! Teď máme plnou spíž.',
 } as const;
 export type LineId = keyof typeof LINES;

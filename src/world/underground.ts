@@ -89,6 +89,11 @@ export class Underground {
     return new THREE.Vector3(x * C, -y * C, 0);
   }
 
+  /** Who gives hints down here (the worm or the beetle). */
+  get speaker(): THREE.Object3D {
+    return (this.worm ?? this.beetle)?.root ?? this.hamster.root;
+  }
+
   get moving(): boolean {
     return this.moveT >= 0;
   }

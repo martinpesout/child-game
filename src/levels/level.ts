@@ -23,6 +23,8 @@ export interface LevelEvents {
   onRespawn?(): void;
   /** A lily pad started to sink. */
   onSink?(): void;
+  /** A paw tap: on a mound, on soil underground, or against something that can't be dug. */
+  onDig?(kind: 'mound' | 'soil' | 'blocked'): void;
   /** The hamster bumped into a puddle. */
   onSplash?(): void;
 }
