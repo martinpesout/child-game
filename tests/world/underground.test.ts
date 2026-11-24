@@ -24,6 +24,7 @@ it('křeček je vždy v záběru a kamera nevyjede za okraj bludiště (4:3 i 16
     const u = new Underground(LEVEL4_MAZES[1]);
     u.resize(aspect);
     u.enter();
+  run(u, 1 / 60); // let go of the stick once after entering
     run(u, 3);
     for (let gx = 0; gx < u.grid.cols; gx++) {
       u.debugPlace(gx, 3);
@@ -40,6 +41,7 @@ it('při vstupu je východ v záběru a exitIndicator je pak null nebo míří k
   const u = new Underground(LEVEL4_MAZES[1]);
   u.resize(4 / 3);
   u.enter();
+  run(u, 1 / 60); // let go of the stick once after entering
   run(u, 0.8);
   const e = ndc(u, u.cellCenter(u.exitCell.x, u.exitCell.y));
   expect(Math.abs(e.x)).toBeLessThan(1);
@@ -54,6 +56,7 @@ it('při vstupu je východ v záběru a exitIndicator je pak null nebo míří k
 it('hrabání vrátí crack a pak dig; do kamínku blocked', () => {
   const u = new Underground(small());
   u.enter();
+  run(u, 1 / 60); // let go of the stick once after entering
   run(u, 0.1, { x: 1, y: 0 });
   expect(tapOnce(u)).toContain('crack');
   const ev = tapOnce(u);
@@ -69,6 +72,7 @@ it('hrabání vrátí crack a pak dig; do kamínku blocked', () => {
 it('pohyb trvá ~0,2 s a během něj se další krok nebere', () => {
   const u = new Underground(small());
   u.enter();
+  run(u, 1 / 60); // let go of the stick once after entering
   u.grid.dig(); // facing right: crack
   u.grid.dig();
   run(u, 0.1, { x: 1, y: 0 });
@@ -82,6 +86,7 @@ it('pohyb trvá ~0,2 s a během něj se další krok nebere', () => {
 it('vyhrabání východu vrátí exit; joystick nahoru na vstupu vrátí leave', () => {
   const u = new Underground(small());
   u.enter();
+  run(u, 1 / 60); // let go of the stick once after entering
   expect(run(u, 0.05, { x: 0, y: 1 })).toContain('leave');
   u.debugPlace(3, 1);
   run(u, 0.05, { x: 0, y: 1 });
@@ -94,6 +99,7 @@ it('kamarád: první přiblížení vrátí friend jednou a brouček se probudí
   const d = LEVEL4_MAZES[1];
   const u = new Underground(d);
   u.enter();
+  run(u, 1 / 60); // let go of the stick once after entering
   const f = d.friends[0];
   u.debugPlace(f.x - 1, f.y);
   const ev = run(u, 0.5);
@@ -106,6 +112,7 @@ it('kamarád: první přiblížení vrátí friend jednou a brouček se probudí
 it('velká věc: hrabání do ní vrátí big nejvýš jednou za 6 s', () => {
   const u = new Underground(small());
   u.enter();
+  run(u, 1 / 60); // let go of the stick once after entering
   u.debugPlace(3, 2);
   run(u, 0.05, { x: 1, y: 0 });
   expect(tapOnce(u)).toContain('big');

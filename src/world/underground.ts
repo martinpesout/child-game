@@ -66,6 +66,8 @@ export class Underground {
   private bigCooldown = 0;
   private blockedCooldown = 0;
   private met = new Set<string>();
+  /** After entering, the joystick must be let go once (a held stick must not climb straight back out). */
+  private needNeutral = false;
 
   constructor(def: MazeDef) {
     this.grid = new MazeGrid(def);
@@ -140,6 +142,7 @@ export class Underground {
     this.yaw = Math.PI / 2;
     this.moveT = -1;
     this.introT = this.pan ? 0 : -1;
+    this.needNeutral = true;
     this.place();
     this.camX = this.pan ? this.cellCenter(this.exitCell.x, 0).x : this.centerX();
     this.updateCamera(0, true);
@@ -159,7 +162,8 @@ export class Underground {
     this.place();
   }
 
-  update(dt: number, move: { x: number; y: number }, tap: boolean): UndergroundEvent[] {
+  /** `frozen` (during the iris): no moving or digging, only animations and noticing the stick being let go. */
+  update(dt: number, move: { x: number; y: number }, tap: boolean, frozen = false): UndergroundEvent[] {
     const ev: UndergroundEvent[] = [];
     this.t += dt;
     this.bigCooldown = Math.max(0, this.bigCooldown - dt);
@@ -172,10 +176,22 @@ export class Underground {
       this.body.pos.x = p.x;
       this.body.pos.y = p.y;
       this.body.vel.x = 2;
-      if (k >= 1) this.moveT = -1;
+      if (k >= 1) {
+        this.moveT = -1;
+        // walking into an exit dug earlier also leads out (e.g. coming back to the pen)
+        if (this.grid.exited && this.grid.pos.x === this.exitCell.x && this.grid.pos.y === this.exitCell.y) ev.push({ type: 'exit' });
+      }
     } else {
       this.body.vel.x = 0;
-      const dir = toDir(move);
+      let dir = toDir(move);
+      if (frozen) {
+        if (!dir) this.needNeutral = false;
+        dir = null;
+        tap = false;
+      } else if (this.needNeutral) {
+        if (!dir) this.needNeutral = false;
+        dir = null;
+      }
       if (dir) {
         if (dir.y === -1 && this.grid.atEntry()) ev.push({ type: 'leave' });
         else {

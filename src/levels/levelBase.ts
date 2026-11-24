@@ -97,6 +97,11 @@ export abstract class LevelBase implements Level {
   protected currentAction(): ActionMode {
     return 'jump';
   }
+  /** Treat the action button as already pressed: a still-held button won't jump or act until released. */
+  protected lockAction(): void {
+    this.prevAction = true;
+    this.jumpLock = true;
+  }
   /** A press (rising edge) of the action button while it is not a jump. */
   protected onAction(_mode: ActionMode): void {}
   /** Start of the celebration (confetti + happy hamster by default). */

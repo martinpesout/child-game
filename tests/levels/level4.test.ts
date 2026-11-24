@@ -236,3 +236,55 @@ it('pod zemí tlačítko ukazuje tlapku', () => {
   expect(l.actionMode).toBe('dig');
   l.dispose();
 });
+
+it('po odchodu z ohrady jde ohrada znovu otevřít: projitím vyhrabaného východu se křeček vrátí do ohrady', () => {
+  const { l } = setup();
+  enterPen(l, 0);
+  solveMaze(l, 0, false);
+  tick(l, 1.1);
+  const b = LEVEL4.pens[0].back;
+  put(l, b.x, b.z);
+  tap(l);
+  tick(l, 1.1);
+  enterPen(l, 0);
+  expect(l.mode).toBe('underground');
+  goTo(l, 0, inner(l).ugs[0].exitCell);
+  tick(l, 1.2);
+  expect(l.mode).toBe('surface');
+  const pen = LEVEL4.pens[0];
+  const p = inner(l).body.pos;
+  expect(((p.x - pen.x) / pen.rx) ** 2 + ((p.z - pen.z) / pen.rz) ** 2).toBeLessThan(1);
+  l.dispose();
+});
+
+it('s drženým joystickem dopředu po vlezení do díry křeček hned nevyleze', () => {
+  const { l } = setup();
+  const h = LEVEL4.pens[0].hole;
+  put(l, h.x, h.z);
+  l.update(1 / 60, { move: { x: 0, y: 1 }, action: true }, 0);
+  tick(l, 2, { move: { x: 0, y: 1 }, action: false });
+  expect(l.mode).toBe('underground');
+  tick(l, 0.1);
+  tick(l, 0.1, { move: { x: 0, y: 1 }, action: false });
+  expect(l.mode).toBe('irisIn');
+  l.dispose();
+});
+
+it('držené tlačítko po návratu na louku nezpůsobí skok ani nové vlezení do díry', () => {
+  const { l } = setup();
+  enterPen(l, 0);
+  tick(l, 0.1);
+  // climb out through the entry with the button held all the way through the iris
+  tick(l, 0.05, { move: { x: 0, y: 1 }, action: true });
+  const press = { move: { x: 0, y: 0 }, action: true };
+  tick(l, 1.1, press);
+  expect(l.mode).toBe('surface');
+  let peak = 0;
+  for (let t = 0; t < 1; t += 1 / 60) {
+    l.update(1 / 60, press, 0);
+    peak = Math.max(peak, inner(l).body.pos.y);
+  }
+  expect(l.mode).toBe('surface');
+  expect(peak).toBe(0);
+  l.dispose();
+});

@@ -230,8 +230,10 @@ export class Level4Tree extends LevelBase {
       }
       if (this.trans.t >= IRIS) this.trans = null;
       this.prevTap = input.action;
-      if (this.placeVal === 'underground') this.ugs[this.penIdx].update(dt, { x: 0, y: 0 }, false);
+      if (this.placeVal === 'underground') this.ugs[this.penIdx].update(dt, input.move, false, true);
       else super.update(dt, { move: { x: 0, y: 0 }, action: false }, cameraYaw);
+      // a button still held through the iris must not jump or dive straight back in
+      this.lockAction();
       return;
     }
     if (this.placeVal === 'underground') {
@@ -357,7 +359,7 @@ export class Level4Tree extends LevelBase {
       const dx = pen.hole.x - pen.x;
       const dz = pen.hole.z - pen.z;
       const l = Math.hypot(dx, dz) || 1;
-      this.putOnSurface(pen.hole.x + (dx / l) * 1.1, pen.hole.z + (dz / l) * 1.1, Math.atan2(dx, dz));
+      this.putOnSurface(pen.hole.x + (dx / l) * 1.4, pen.hole.z + (dz / l) * 1.4, Math.atan2(dx, dz));
     }
   }
 

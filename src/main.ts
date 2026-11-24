@@ -167,6 +167,7 @@ function view3d(): { scene: THREE.Scene; camera: THREE.Camera } | null {
   return (level as { view3d?: { scene: THREE.Scene; camera: THREE.Camera } | null } | undefined)?.view3d ?? null;
 }
 
+let shownScene: THREE.Scene | null = null;
 let lastQuip: LineId | null = null;
 function pickQuip(kind: 'bee' | 'butterfly'): LineId {
   const ids = (Object.keys(LINES) as LineId[]).filter((k) => k.startsWith(kind) && k !== lastQuip);
@@ -351,6 +352,13 @@ new GameLoop(
     follow.update(level.player.position, dt);
     fader.update(camera.position, level.player.position, dt);
     screens.updateControls(touch.joystickView, active && state.action);
+    // a speech bubble belongs to one world: hide it when switching between the meadow and the underground
+    const shown = view3d()?.scene ?? null;
+    if (shown !== shownScene) {
+      shownScene = shown;
+      bubble?.hide();
+      bubble = null;
+    }
     screens.setAction(level.actionMode);
     // bubble over the hamster on the meadow when the button means dig / into the hole
     const am = level.actionMode;
