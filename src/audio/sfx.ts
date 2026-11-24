@@ -179,11 +179,24 @@ export class Sfx {
     this.tone(500, 0.25, 'sine', 0.05, 0.22, 360);
   }
 
-  /** Scratchy paw dig in the soil. */
+  /** One paw scrape in the soil: two scratchy "shhk" strokes, a soft thud of earth and crumbs pattering down. */
   dig(): void {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
-    for (let i = 0; i < 3; i++) this.noiseHit(t + i * 0.045, 500 + i * 250, 0.07, 0.1);
+    this.scrape(t, 2400, 800, 0.14, 0.24);
+    this.scrape(t + 0.13, 2000, 700, 0.12, 0.2);
+    this.toneAt(t + 0.03, 120, 0.12, 'sine', 0.22, 70);
+    for (let i = 0; i < 4; i++) this.noiseHit(t + 0.2 + i * 0.06 + Math.random() * 0.03, 2600 + Math.random() * 1500, 0.03, 0.06);
+  }
+
+  /** A mound or a block of soil breaks open: a bigger rush of earth, a deep thump and lots of falling crumbs. */
+  crumble(): void {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    this.scrape(t, 1600, 260, 0.38, 0.32);
+    this.scrape(t + 0.05, 3000, 900, 0.2, 0.14);
+    this.toneAt(t, 85, 0.28, 'sine', 0.3, 50);
+    for (let i = 0; i < 8; i++) this.noiseHit(t + 0.12 + i * 0.06 + Math.random() * 0.04, 1800 + Math.random() * 2400, 0.035, 0.07);
   }
 
   /** Paw against a stone: a dull knock. */
@@ -409,6 +422,7 @@ export class Sfx {
   }
 
   private noise: AudioBuffer | null = null;
+  private scrapeNoise: AudioBuffer | null = null;
 
   private crunch(delay: number): void {
     if (!this.ctx) return;
@@ -416,6 +430,35 @@ export class Sfx {
   }
 
   /** Short filtered noise burst (crunch, shaker). */
+  /** Band-passed noise sweeping from f0 to f1 – a scratch of paws in the soil. */
+  private scrape(t0: number, f0: number, f1: number, dur: number, vol: number): void {
+    const ctx = this.ctx;
+    if (!ctx || !this.master || this._muted || ctx.state !== 'running') return;
+    if (!this.scrapeNoise) {
+      const len = Math.floor(ctx.sampleRate * 0.5);
+      this.scrapeNoise = ctx.createBuffer(1, len, ctx.sampleRate);
+      const d = this.scrapeNoise.getChannelData(0);
+      // grainy noise: random bursts make it sound like soil rather than hiss
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (Math.random() < 0.35 ? 1 : 0.35);
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = this.scrapeNoise;
+    const f = ctx.createBiquadFilter();
+    f.type = 'bandpass';
+    f.frequency.setValueAtTime(f0, t0);
+    f.frequency.exponentialRampToValueAtTime(f1, t0 + dur);
+    f.Q.setValueAtTime(0.8, t0);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(vol, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    src.connect(f);
+    f.connect(g);
+    g.connect(this.master);
+    src.start(t0);
+    src.stop(t0 + dur + 0.02);
+  }
+
   private noiseHit(t0: number, freq: number, dur: number, vol: number, dest?: AudioNode): void {
     const ctx = this.ctx;
     if (!ctx || !this.master || this._muted || ctx.state !== 'running') return;

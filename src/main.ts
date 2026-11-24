@@ -136,7 +136,7 @@ function startLevel(id = levelId) {
     },
     onSplash: () => sfx.splash(),
     onSink: () => sfx.plop(),
-    onDig: (kind) => (kind === 'blocked' ? sfx.thud() : sfx.dig()),
+    onDig: (kind) => (kind === 'blocked' ? sfx.thud() : kind === 'crumble' ? sfx.crumble() : sfx.dig()),
     onRespawn: () => screens.fade(),
     onCritter(kind, obj) {
       // one speaker at a time: never interrupt a friend or another quip

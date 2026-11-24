@@ -318,7 +318,7 @@ export class Level4Tree extends LevelBase {
     this.fx.burst(at, fwd.clone().negate(), 0, m.left === 1 ? 1.3 : 1);
     m.left--;
     m.view.setLeft(m.left);
-    this.events.onDig?.('mound');
+    this.events.onDig?.(m.left > 0 ? 'mound' : 'crumble');
     if (m.left > 0) return;
     const idx = this.done++;
     this.events.onGoal?.(idx, LEVEL4.mounds.length);
@@ -388,8 +388,10 @@ export class Level4Tree extends LevelBase {
   private handleUnder(e: UndergroundEvent): void {
     switch (e.type) {
       case 'crack':
-      case 'dig':
         this.events.onDig?.('soil');
+        break;
+      case 'dig':
+        this.events.onDig?.('crumble');
         break;
       case 'blocked':
         this.events.onDig?.('blocked');

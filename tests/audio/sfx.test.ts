@@ -6,6 +6,7 @@ class FakeOsc extends FakeNode { type = 'sine'; frequency = new FakeParam(); det
 class FakeGain extends FakeNode { gain = new FakeParam(); }
 class FakeCtx {
   static oscillators = 0;
+  static sources = 0;
   state = 'suspended';
   currentTime = 0;
   destination = new FakeNode();
@@ -16,11 +17,12 @@ class FakeCtx {
   createBiquadFilter() { return Object.assign(new FakeNode(), { type: 'lowpass', frequency: new FakeParam(), Q: new FakeParam() }); }
   createBuffer() { return { getChannelData: () => new Float32Array(10) }; }
   createDelay() { return Object.assign(new FakeNode(), { delayTime: new FakeParam() }); }
-  createBufferSource() { return Object.assign(new FakeNode(), { buffer: null, start() {}, stop() {} }); }
+  createBufferSource() { FakeCtx.sources++; return Object.assign(new FakeNode(), { buffer: null, start() {}, stop() {} }); }
 }
 
 beforeEach(() => {
   FakeCtx.oscillators = 0;
+  FakeCtx.sources = 0;
   vi.stubGlobal('AudioContext', FakeCtx);
 });
 afterEach(() => vi.unstubAllGlobals());
@@ -224,4 +226,22 @@ it('hrabání, ťuk, chrápání a vykouknutí: ztlumeno nic, jinak zvuk; bez Au
   s.setMuted(false);
   s.thud(); s.snore(); s.pop();
   expect(FakeCtx.oscillators).toBeGreaterThan(0);
+});
+
+it('hrabání: šoupnutí tlapky, žuchnutí hlíny a padající drobky; ztlumeno nic', () => {
+  const s = new Sfx();
+  s.unlock();
+  const ctx = (s as unknown as { ctx: FakeCtx }).ctx;
+  ctx.state = 'running';
+  s.setMuted(true);
+  s.dig();
+  s.crumble();
+  expect(FakeCtx.sources + FakeCtx.oscillators).toBe(0);
+  s.setMuted(false);
+  s.dig();
+  expect(FakeCtx.sources).toBeGreaterThanOrEqual(5);
+  expect(FakeCtx.oscillators).toBeGreaterThanOrEqual(1);
+  const before = FakeCtx.sources;
+  s.crumble();
+  expect(FakeCtx.sources - before).toBeGreaterThanOrEqual(8);
 });
