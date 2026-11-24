@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Squirrel } from '../characters/squirrel';
 import { buildWorld } from '../world/world';
-import { makeHoop, makeTube, makePuddle, makeFlowerbed, makeFence, makeCan, makePot, makeWheel, makePath, setGateState, tubeColliders, tubeZone, puddleCollider } from '../world/garden';
+import { hoopColliders, makeHoop, makeTube, makePuddle, makeFlowerbed, makeFence, makeCan, makePot, makeWheel, makePath, setGateState, tubeColliders, tubeZone, puddleCollider } from '../world/garden';
 import type { Collider } from '../physics/physics';
 import type { LineId } from '../audio/lines';
 import { GateTracker, navArrowVisible, type Course, type Gate } from './course';
@@ -79,7 +79,7 @@ export class Level2Garden extends LevelBase {
     const L = LEVEL2.tubeLength;
 
     const colliders: Collider[] = [...LEVEL2.props.map((p) => p.collider)];
-    for (const g of this.gates) if (g.kind === 'tube') colliders.push(...tubeColliders(g, L));
+    for (const g of this.gates) colliders.push(...(g.kind === 'tube' ? tubeColliders(g, L) : hoopColliders(g)));
     for (const p of place.puddles) colliders.push(puddleCollider(p.x, p.z, p.r));
     for (const d of place.decor) {
       if (d.type === 'flowerbed') colliders.push({ kind: 'box', x: d.x, z: d.z, halfX: 1.0, halfZ: 0.45, height: 0.95, yaw: d.yaw });

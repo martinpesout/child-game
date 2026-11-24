@@ -27,12 +27,6 @@ it('před cílem zastaví, dokud křeček nedokončí', () => {
   expect(r.s).toBeLessThanOrEqual(60 - 1.5 + 1e-6);
 });
 
-it('po dokončení doběhne do cíle', () => {
-  const r = new SquirrelRunner(60);
-  run(r, 30, 60);
-  run(r, 5, 60, true);
-  expect(r.s).toBeCloseTo(60);
-});
 
 it('nikdy necouvá', () => {
   const r = new SquirrelRunner(60);
@@ -40,4 +34,12 @@ it('nikdy necouvá', () => {
   const s = r.s;
   run(r, 2, 0);
   expect(r.s).toBe(s);
+});
+
+it('po dokončení zastaví před cílem (nevběhne do křeččího kola)', () => {
+  const r = new SquirrelRunner(60);
+  run(r, 30, 60);
+  run(r, 5, 60, true);
+  expect(r.s).toBeLessThanOrEqual(60 - 2 + 1e-6);
+  expect(r.s).toBeGreaterThan(60 - 2.5);
 });

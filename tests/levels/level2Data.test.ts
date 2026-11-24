@@ -36,3 +36,8 @@ it('terén zahrady je mírný a u cestičky rovný', () => {
     expect(Math.abs(t.height(p.x, p.z))).toBeLessThan(0.02);
   }
 });
+
+it('poslední brána je blízko křeččího kola (krátký skok do kola)', () => {
+  const g = level2Gates(course);
+  expect(course.length - g[g.length - 1].s).toBeLessThanOrEqual(3.5);
+});

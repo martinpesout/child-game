@@ -59,3 +59,9 @@ it('šipka: daleko od cesty nebo brána mimo záběr', () => {
   expect(navArrowVisible(2, true)).toBe(false);
   expect(navArrowVisible(2, false)).toBe(true);
 });
+
+it('obruč: průchod těsně vedle (0.75 m od středu) se nepočítá', () => {
+  const t = new GateTracker(gates());
+  expect(t.update({ x: 0.75, z: -4.5 }, { x: 0.75, z: -5.5 })).toBeNull();
+  expect(t.update({ x: 0.4, z: -4.5 }, { x: 0.4, z: -5.5 })).toBe(0);
+});

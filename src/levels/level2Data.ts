@@ -27,7 +27,7 @@ export const LEVEL2 = {
     { f: 0.56, kind: 'hoop' },
     { f: 0.67, kind: 'tube' },
     { f: 0.79, kind: 'hoop' },
-    { f: 0.9, kind: 'hoop' },
+    { f: 0.96, kind: 'hoop' },
   ] as { f: number; kind: 'hoop' | 'tube' }[],
   tubeLength: 3,
   /** Things beside the track: f = fraction along the track, side = ±1 (left/right), off = metres from the centre line. */

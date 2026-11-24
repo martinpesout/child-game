@@ -54,6 +54,12 @@ export function tubeZone(g: Gate, length: number): (x: number, z: number) => boo
   };
 }
 
+/** Small posts at the hoop's feet, so the hamster can't slip past right beside the hoop. */
+export function hoopColliders(g: Gate): Collider[] {
+  const off = HOOP_RADIUS * 0.75;
+  return [-1, 1].map((s) => ({ kind: 'cylinder' as const, x: g.x - g.dirZ * off * s, z: g.z + g.dirX * off * s, radius: 0.1, height: 0.9 }));
+}
+
 /** Invisible wall around a puddle. */
 export function puddleCollider(x: number, z: number, r: number): Collider {
   return { kind: 'cylinder', x, z, radius: r, height: WALL_HEIGHT };

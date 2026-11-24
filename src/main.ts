@@ -205,6 +205,8 @@ flow.onChange((s) => {
   if (s !== 'playing' && s !== 'paused') input.reset();
   switch (s) {
     case 'map':
+      // the level behind the map goes quiet (no quips or hints while choosing)
+      phase = 'menu';
       sfx.click();
       bubble?.hide();
       bubble = null;

@@ -79,7 +79,8 @@ export interface Gate {
   kind: 'hoop' | 'tube';
 }
 
-export const GATE_RADIUS = { hoop: 1.0, tube: 0.7 };
+/** How far from a gate's centre a pass still counts (the hoop opening at hamster height is ~±0.6 m). */
+export const GATE_RADIUS = { hoop: 0.6, tube: 0.7 };
 
 export function placeGates(course: Course, specs: { s: number; kind: 'hoop' | 'tube' }[]): Gate[] {
   return specs.map(({ s, kind }) => {

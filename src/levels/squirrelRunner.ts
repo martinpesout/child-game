@@ -7,12 +7,13 @@ export class SquirrelRunner {
 
   constructor(
     private readonly courseLength: number,
-    private readonly opts = { lead: 3, wait: 7, finishMargin: 1.5, speed: 3.6 },
+    private readonly opts = { lead: 3, wait: 7, finishMargin: 2.5, parkMargin: 2.0, speed: 3.6 },
   ) {}
 
   update(dt: number, playerS: number, playerDone: boolean): void {
     const o = this.opts;
-    const target = playerDone ? this.courseLength : Math.min(playerS + o.lead, this.courseLength - o.finishMargin);
+    // after the finish it stops just before the hamster wheel (and never runs into it)
+    const target = playerDone ? this.courseLength - o.parkMargin : Math.min(playerS + o.lead, this.courseLength - o.finishMargin);
     this.waiting = !playerDone && this.s - playerS > o.wait;
     const before = this.s;
     if (!this.waiting && this.s < target) this.s = Math.min(target, this.s + o.speed * dt);

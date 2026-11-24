@@ -55,3 +55,15 @@ it('stav brány mění barvu', () => {
   const gold = (h.userData.ring as THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>).material.color.getHex();
   expect(green).not.toBe(gold);
 });
+
+it('obruč má u nožek překážky, kolem nich se neproběhne', async () => {
+  const { hoopColliders } = await import('../../src/world/garden');
+  const w: PhysicsWorld = { colliders: hoopColliders(gate(0, -1)), bounds: { halfSize: 20 } };
+  const b = body(0.71, 2);
+  let minD = Infinity;
+  for (let t = 0; t < 2; t += 1 / 60) {
+    stepBody(b, { x: 0, z: -1 }, false, 1 / 60, w);
+    minD = Math.min(minD, Math.hypot(b.pos.x - 0.7125, b.pos.z));
+  }
+  expect(minD).toBeGreaterThanOrEqual(0.1 + 0.25 - 1e-3); // never runs through the foot
+});
