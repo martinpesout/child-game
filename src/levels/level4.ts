@@ -5,6 +5,7 @@ import { Terrain } from '../world/terrain';
 import { makeBigTree, makeMound, makeHole, makeMolehill, makeRootFence, makeFallingLeaf } from '../world/burrow';
 import { makeTreat } from '../world/treats';
 import { Underground, type UndergroundEvent } from '../world/underground';
+import { DirtFx } from '../world/digfx';
 import type { Collider } from '../physics/physics';
 import type { LineId } from '../audio/lines';
 import type { InputState } from '../input/types';
@@ -54,6 +55,7 @@ export class Level4Tree extends LevelBase {
   private prize: { obj: THREE.Object3D; t: number; from: THREE.Vector3 } | null = null;
   private holeSaid = new Set<number>();
   private aspect = 4 / 3;
+  private fx!: DirtFx;
 
   constructor() {
     super();
@@ -161,6 +163,7 @@ export class Level4Tree extends LevelBase {
   }
 
   protected onSetup(): void {
+    this.fx = new DirtFx(this.scene);
     this.mole = new Mole();
     this.mole.root.position.set(LEVEL4.moleHome.x, 0, LEVEL4.moleHome.z);
     this.moleTarget.copy(this.mole.root.position);
@@ -251,6 +254,7 @@ export class Level4Tree extends LevelBase {
     this.holes.forEach((h) => (h.userData.tick as (t: number) => void)(this.t));
     this.leaves.forEach((l) => l.update(dt));
     for (const m of this.mounds) m.view.shake(this.t);
+    this.fx.update(dt);
     this.updatePrize(dt);
     this.updateMole(dt);
     // hint when standing at a hole for the first time
@@ -272,6 +276,7 @@ export class Level4Tree extends LevelBase {
     });
     this.prize?.obj.removeFromParent();
     this.prize = null;
+    this.fx.dispose();
     this.mole.dispose();
     this.ugs.forEach((u) => u.dispose());
     this.ugs = [];
@@ -305,6 +310,12 @@ export class Level4Tree extends LevelBase {
   }
 
   private digMound(m: Mound): void {
+    // paws scrape, earth flies backwards between the legs and dust rises
+    this.hamster.anim.dig();
+    const h = this.hamster.root.rotation.y;
+    const fwd = new THREE.Vector3(Math.sin(h), 0, Math.cos(h));
+    const at = new THREE.Vector3(this.body.pos.x, 0, this.body.pos.z).addScaledVector(fwd, 0.25);
+    this.fx.burst(at, fwd.clone().negate(), 0, m.left === 1 ? 1.3 : 1);
     m.left--;
     m.view.setLeft(m.left);
     this.events.onDig?.('mound');

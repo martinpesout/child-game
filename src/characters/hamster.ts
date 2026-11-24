@@ -122,6 +122,18 @@ export class Hamster {
       p.position.z = (i < 2 ? 0.13 : -0.1) + Math.cos(gait + phase) * pawSwing;
     });
 
+    if (a.digging > 0) {
+      // lean forward and scrape quickly with the front paws, alternating
+      const k = a.digging;
+      this.bob.rotation.x = 0.4 * k;
+      this.bob.position.y = -0.02 * k;
+      for (let i = 0; i < 2; i++) {
+        const ph = a.digPhase + i * Math.PI;
+        this.paws[i].position.z = 0.13 + Math.sin(ph) * 0.06 * k;
+        this.paws[i].position.y = 0.03 + Math.max(0, Math.cos(ph)) * 0.05 * k;
+      }
+    }
+
     if (a.mood === 'run') {
       this.bob.position.y = Math.abs(Math.sin(gait)) * 0.035;
       this.bob.rotation.z = Math.sin(gait) * 0.07;

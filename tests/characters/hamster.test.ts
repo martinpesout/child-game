@@ -21,3 +21,25 @@ it('sync natočí křečka do směru pohybu', () => {
   expect(h.root.rotation.y).toBeCloseTo(Math.PI / 2, 1);
   h.dispose();
 });
+
+it('při hrabání se křeček předkloní a hrabe předními tlapkami', async () => {
+  const { Hamster } = await import('../../src/characters/hamster');
+  const h = new Hamster();
+  const body = { pos: { x: 0, y: 0, z: 0 }, vel: { x: 0, y: 0, z: 0 }, radius: 0.25, grounded: true };
+  h.sync(body, 1 / 60);
+  const paw = (h as unknown as { paws: THREE.Object3D[] }).paws[0];
+  const bob = (h as unknown as { bob: THREE.Object3D }).bob;
+  h.anim.dig();
+  const zs: number[] = [];
+  let lean = 0;
+  for (let i = 0; i < 12; i++) {
+    h.sync(body, 1 / 60);
+    zs.push(paw.position.z);
+    lean = Math.max(lean, bob.rotation.x);
+  }
+  expect(lean).toBeGreaterThan(0.2);
+  expect(Math.max(...zs) - Math.min(...zs)).toBeGreaterThan(0.04);
+  for (let i = 0; i < 60; i++) h.sync(body, 1 / 60);
+  expect(bob.rotation.x).toBeLessThan(0.05);
+  h.dispose();
+});

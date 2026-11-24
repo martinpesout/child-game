@@ -18,6 +18,10 @@ export class HamsterAnim {
   /** -1..1 munching motion while chewing, 0 otherwise. */
   chew = 0;
   chewing = false;
+  /** 0..1 while scraping with the front paws (dig), 0 otherwise. */
+  digging = 0;
+  digPhase = 0;
+  private digTimer = 0;
   private chewTimer = 0;
 
   private puffTimer = 0;
@@ -51,6 +55,15 @@ export class HamsterAnim {
       this.chew = this.chewing ? Math.sin(t * CHEW_RATE * Math.PI * 2) : 0;
     }
 
+    if (this.digTimer > 0) {
+      this.digTimer -= dt;
+      this.digPhase += dt * 28;
+    }
+    // ease in/out of the dig pose
+    const want = this.digTimer > 0 ? 1 : 0;
+    this.digging += (want - this.digging) * Math.min(1, dt * 14);
+    if (this.digging < 0.01) this.digging = 0;
+
     this.nextBlink -= dt;
     if (this.nextBlink <= 0) {
       this.blinkTimer = BLINK_TIME;
@@ -67,6 +80,11 @@ export class HamsterAnim {
     this.cheekPuff = 1;
     this.chewTimer = CHEW_TIME;
     this.chewing = true;
+  }
+
+  /** A quick scrape with the front paws (one tap of the dig button). */
+  dig(): void {
+    this.digTimer = 0.35;
   }
 
   celebrate(): void {

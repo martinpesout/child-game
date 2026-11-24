@@ -5,6 +5,7 @@ import { Worm, Beetle } from '../characters/critters4';
 import { MazeGrid, toDir, type BigKind, type MazeDef } from '../levels/maze';
 import { makeTreat } from './treats';
 import { makeChest, makeDino } from './buried';
+import { DirtFx } from './digfx';
 import type { Body } from '../physics/physics';
 import type { ItemKind } from '../levels/level1Data';
 
@@ -68,12 +69,14 @@ export class Underground {
   private met = new Set<string>();
   /** After entering, the joystick must be let go once (a held stick must not climb straight back out). */
   private needNeutral = false;
+  private readonly fx: DirtFx;
 
   constructor(def: MazeDef) {
     this.grid = new MazeGrid(def);
     const ex = def.rows[0].indexOf('E');
     this.exitCell = { x: ex, y: 0 };
     this.build(def);
+    this.fx = new DirtFx(this.scene);
     this.scene.add(this.hamster.root);
     this.highlight = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(C * 0.96, C * 0.96, D * 1.02)), new THREE.LineBasicMaterial({ color: 0xffffff }));
     this.scene.add(this.highlight);
@@ -224,6 +227,7 @@ export class Underground {
 
   dispose(): void {
     this.hamster.dispose();
+    this.fx.dispose();
     this.worm?.dispose();
     this.beetle?.dispose();
     this.scene.traverse((o) => {
@@ -258,7 +262,7 @@ export class Underground {
       ev.push({ type: 'crack' });
       const b = this.blocks.get(key);
       if (b) b.material = this.crackMat;
-      this.spawnCrumbs(r.x, r.y, 5);
+      this.dirt(r.x, r.y, 0.8);
     } else if (r.result === 'dug' || r.result === 'exit') {
       ev.push({ type: r.result === 'exit' ? 'exit' : 'dig' });
       const b = this.blocks.get(key);
@@ -266,7 +270,7 @@ export class Underground {
         b.removeFromParent();
         this.blocks.delete(key);
       }
-      this.spawnCrumbs(r.x, r.y, 10);
+      this.dirt(r.x, r.y, 1.1);
       if (r.item) {
         ev.push({ type: 'item', item: r.item });
         const t = this.treats.get(key);
@@ -327,15 +331,17 @@ export class Underground {
     this.camera.updateMatrixWorld();
   }
 
-  private spawnCrumbs(x: number, y: number, n: number): void {
+  /** Paw scrape at cell (x, y): the hamster leans in, earth flies out behind it and dust rises. */
+  private dirt(x: number, y: number, strength: number): void {
+    this.hamster.anim.dig();
     const c = this.cellCenter(x, y);
-    for (let i = 0; i < n; i++) {
-      const m = new THREE.Mesh(this.crumbGeo, this.soilMat);
-      m.position.set(c.x + (Math.random() - 0.5) * C * 0.6, c.y, D / 2);
-      this.scene.add(m);
-      this.crumbs.push({ m, v: new THREE.Vector3((Math.random() - 0.5) * 2, 1 + Math.random() * 1.5, 0.5 + Math.random()), t: 0 });
-    }
+    const feet = this.feet(this.grid.pos.x, this.grid.pos.y);
+    // thrown backwards along the tunnel (away from where the hamster faces)
+    const back = new THREE.Vector3(this.yaw > 0 ? -1 : 1, 0, 0);
+    const at = new THREE.Vector3((c.x + feet.x) / 2, feet.y + 0.1, D / 2 - 0.1);
+    this.fx.burst(at, back, feet.y, strength * 0.8);
   }
+
 
   private ambient(dt: number): void {
     for (const c of this.crumbs) {
@@ -346,6 +352,7 @@ export class Underground {
     while (this.crumbs.length && this.crumbs[0].t > 0.8) this.crumbs.shift()!.m.removeFromParent();
     this.roots.forEach((r, i) => (r.rotation.z = Math.sin(this.t * 1.3 + i) * 0.08));
     (this.sunbeam.material as THREE.MeshBasicMaterial).opacity = 0.3 + 0.15 * Math.sin(this.t * 3) + (this.introT >= 0 ? 0.2 : 0);
+    this.fx.update(dt);
     this.worm?.update(dt);
     this.beetle?.update(dt);
     if (this.skull && this.skullT >= 0) {
