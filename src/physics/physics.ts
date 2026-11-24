@@ -2,7 +2,7 @@
 
 export type Collider =
   | { kind: 'cylinder'; x: number; z: number; radius: number; height: number }
-  | { kind: 'box'; x: number; z: number; halfX: number; halfZ: number; height: number };
+  | { kind: 'box'; x: number; z: number; halfX: number; halfZ: number; height: number; yaw?: number };
 
 export interface Body {
   pos: { x: number; y: number; z: number };
@@ -14,6 +14,34 @@ export interface Body {
 export interface PhysicsWorld {
   colliders: Collider[];
   bounds: { halfSize: number };
+  /** Terrain height; missing = flat ground at y = 0. Collider heights are measured from the ground at their centre. */
+  ground?: (x: number, z: number) => number;
+}
+
+export function groundAt(x: number, z: number, world: PhysicsWorld): number {
+  return world.ground ? world.ground(x, z) : 0;
+}
+
+/** World-space top of a collider (ground at its centre + its height). */
+export function colliderTop(c: Collider, world: PhysicsWorld): number {
+  return groundAt(c.x, c.z, world) + c.height;
+}
+
+/** Offset (dx, dz) from a box centre expressed in the box's local axes. */
+function toLocal(c: Extract<Collider, { kind: 'box' }>, dx: number, dz: number): [number, number] {
+  const yaw = c.yaw ?? 0;
+  if (!yaw) return [dx, dz];
+  const co = Math.cos(yaw);
+  const si = Math.sin(yaw);
+  return [dx * co - dz * si, dx * si + dz * co];
+}
+
+function toWorld(c: Extract<Collider, { kind: 'box' }>, lx: number, lz: number): [number, number] {
+  const yaw = c.yaw ?? 0;
+  if (!yaw) return [lx, lz];
+  const co = Math.cos(yaw);
+  const si = Math.sin(yaw);
+  return [lx * co + lz * si, -lx * si + lz * co];
 }
 
 export const PHYS = { gravity: 18, jumpSpeed: 5.2, maxSpeed: 3.2, accel: 20, stepUp: 0.05 };
@@ -21,18 +49,23 @@ export const PHYS = { gravity: 18, jumpSpeed: 5.2, maxSpeed: 3.2, accel: 20, ste
 const MAX_SUBSTEP = 1 / 120;
 /** How far past a collider's edge the body's centre may be and still stand on its top. */
 const STAND_MARGIN = 0.5;
+/** Max drop per substep that still counts as walking on the ground (downhill). */
+const GROUND_SNAP = 0.06;
 
-/** Highest collider top under the body (centre within footprint + radius*STAND_MARGIN), else 0. */
+/** Highest surface under the body: terrain, or a collider top (centre within footprint + radius*STAND_MARGIN). */
 export function topHeightAt(x: number, z: number, radius: number, world: PhysicsWorld): number {
-  let top = 0;
+  let top = groundAt(x, z, world);
   const m = radius * STAND_MARGIN;
   for (const c of world.colliders) {
-    if (c.height <= top) continue;
-    const inside =
-      c.kind === 'cylinder'
-        ? Math.hypot(x - c.x, z - c.z) < c.radius + m
-        : Math.abs(x - c.x) < c.halfX + m && Math.abs(z - c.z) < c.halfZ + m;
-    if (inside) top = c.height;
+    const cTop = colliderTop(c, world);
+    if (cTop <= top) continue;
+    let inside: boolean;
+    if (c.kind === 'cylinder') inside = Math.hypot(x - c.x, z - c.z) < c.radius + m;
+    else {
+      const [lx, lz] = toLocal(c, x - c.x, z - c.z);
+      inside = Math.abs(lx) < c.halfX + m && Math.abs(lz) < c.halfZ + m;
+    }
+    if (inside) top = cTop;
   }
   return top;
 }
@@ -73,7 +106,7 @@ function substep(b: Body, wish: { x: number; z: number }, jump: boolean, h: numb
 
   // push out of obstacles taller than we can step onto
   for (const c of world.colliders) {
-    if (c.height <= b.pos.y + PHYS.stepUp) continue;
+    if (colliderTop(c, world) <= b.pos.y + PHYS.stepUp) continue;
     pushOut(b, c);
   }
 
@@ -84,8 +117,10 @@ function substep(b: Body, wish: { x: number; z: number }, jump: boolean, h: numb
   if (b.pos.z > lim) { b.pos.z = lim; b.vel.z = Math.min(0, b.vel.z); }
   if (b.pos.z < -lim) { b.pos.z = -lim; b.vel.z = Math.max(0, b.vel.z); }
 
-  // floor
+  // floor (stick to the ground when walking downhill instead of hopping)
   const floor = topHeightAt(b.pos.x, b.pos.z, b.radius, world);
+  const wasGrounded = b.grounded;
+  if (wasGrounded && b.vel.y <= 0 && b.pos.y - floor < GROUND_SNAP) b.pos.y = floor;
   if (b.pos.y <= floor && b.vel.y <= 0) {
     b.pos.y = floor;
     b.vel.y = 0;
@@ -108,8 +143,7 @@ function pushOut(b: Body, c: Collider): void {
     if (d < 1e-6) { nx = 1; nz = 0; } else { nx = dx / d; nz = dz / d; }
     pen = min - d;
   } else {
-    const lx = b.pos.x - c.x;
-    const lz = b.pos.z - c.z;
+    const [lx, lz] = toLocal(c, b.pos.x - c.x, b.pos.z - c.z);
     const cx = Math.max(-c.halfX, Math.min(c.halfX, lx));
     const cz = Math.max(-c.halfZ, Math.min(c.halfZ, lz));
     const dx = lx - cx;
@@ -125,6 +159,7 @@ function pushOut(b: Body, c: Collider): void {
       if (px < pz) { nx = Math.sign(lx) || 1; nz = 0; pen = px + b.radius; }
       else { nx = 0; nz = Math.sign(lz) || 1; pen = pz + b.radius; }
     }
+    [nx, nz] = toWorld(c, nx, nz);
   }
   b.pos.x += nx * pen;
   b.pos.z += nz * pen;
