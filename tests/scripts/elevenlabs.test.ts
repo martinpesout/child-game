@@ -50,6 +50,7 @@ it('kolo 4: krtek, žížala a brouček; bez vlastního hlasu krtek mluví jako 
   expect(speakerFor('l4intro')).toBe('mole');
   expect(speakerFor('l4worm')).toBe('worm');
   expect(speakerFor('l4stone')).toBe('worm');
+  expect(speakerFor('l4clock')).toBe('worm');
   expect(speakerFor('l4beetle')).toBe('beetle');
   expect(speakerFor('l4dino')).toBe('beetle');
   const env = { ELEVENLABS_VOICE_HEDGEHOG: 'h', ELEVENLABS_VOICE_BUTTERFLY: 'b', ELEVENLABS_VOICE_BEE: 'e' };

@@ -137,6 +137,7 @@ function startLevel(id = levelId) {
     },
     onSplash: () => sfx.splash(),
     onSink: () => sfx.plop(),
+    onRing: () => sfx.ring(),
     onDig: (kind) => (kind === 'blocked' ? sfx.thud() : kind === 'crumble' ? sfx.crumble() : sfx.dig()),
     onRespawn: () => screens.fade(),
     onCritter(kind, obj) {

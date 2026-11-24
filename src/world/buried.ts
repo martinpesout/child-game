@@ -1,95 +1,96 @@
 import * as THREE from 'three';
 
-/** Buried things in the digging mazes: a pirate chest and a dinosaur skeleton (side view, facing the camera). */
+/** Buried things in the digging mazes: an old alarm clock and a dinosaur skeleton (side view, facing the camera). */
 
 const mat = (color: number, opts: THREE.MeshStandardMaterialParameters = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.85, ...opts });
 
-/** Pirate chest of planks with an arched lid, iron bands, corner brackets, a lock and spilling gold. Size w × h (x, y). */
-export function makeChest(w: number, h: number): THREE.Group {
+/**
+ * Big old wind-up alarm clock buried in the soil (w × h): round red case, two bells with a hammer between them,
+ * a cream face with numbers-dots and hands, little feet and a winding key. `userData.ring(t, k)` animates the ringing
+ * (k = 0..1 strength), `userData.hammer` is the hammer.
+ */
+export function makeClock(w: number, h: number): THREE.Group {
   const g = new THREE.Group();
-  const d = 0.42;
-  const wood = mat(0x8a4f26);
-  const wood2 = mat(0x9c5b2e);
-  const iron = mat(0x4a4a52, { metalness: 0.6, roughness: 0.45 });
-  const gold = mat(0xffcf3f, { metalness: 0.7, roughness: 0.3, emissive: 0x5a3c00, emissiveIntensity: 0.25 });
-  const bodyH = h * 0.5;
-  const lidR = Math.min(d / 2, h * 0.28);
-  const baseY = -h / 2 + 0.04;
-
-  // box of horizontal planks
-  const planks = 4;
-  for (let i = 0; i < planks; i++) {
-    const p = new THREE.Mesh(new THREE.BoxGeometry(w, bodyH / planks - 0.012, d), i % 2 ? wood : wood2);
-    p.position.y = baseY + (i + 0.5) * (bodyH / planks);
-    g.add(p);
+  const body = new THREE.Group();
+  g.add(body);
+  const r = Math.min(w, h) * 0.36;
+  const red = mat(0xe2493b, { roughness: 0.45, metalness: 0.15 });
+  const brass = mat(0xe8b83a, { roughness: 0.35, metalness: 0.6 });
+  const dark = mat(0x2b2220, { roughness: 0.6 });
+  // case: a short fat cylinder facing the camera
+  const ring = new THREE.Mesh(new THREE.CylinderGeometry(r, r, r * 0.55, 32), red);
+  ring.rotation.x = Math.PI / 2;
+  body.add(ring);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(r * 0.98, r * 0.07, 10, 32), brass);
+  rim.position.z = r * 0.28;
+  body.add(rim);
+  const face = new THREE.Mesh(new THREE.CircleGeometry(r * 0.88, 32), mat(0xfff4dc, { roughness: 0.7 }));
+  face.position.z = r * 0.281;
+  body.add(face);
+  // hour dots (12, 3, 6, 9 bigger)
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    const dot = new THREE.Mesh(new THREE.CircleGeometry(i % 3 === 0 ? r * 0.07 : r * 0.04, 10), dark);
+    dot.position.set(Math.sin(a) * r * 0.72, Math.cos(a) * r * 0.72, r * 0.29);
+    body.add(dot);
   }
-  // dark inside, visible under the open lid
-  const inside = new THREE.Mesh(new THREE.BoxGeometry(w * 0.94, 0.02, d * 0.9), mat(0x2a160a));
-  inside.position.y = baseY + bodyH - 0.005;
-  g.add(inside);
-
-  // heap of gold coins and a gem peeking out
-  const coinGeo = new THREE.CylinderGeometry(0.055, 0.055, 0.014, 14);
-  for (let i = 0; i < 16; i++) {
-    const c = new THREE.Mesh(coinGeo, gold);
-    const t = i / 15;
-    c.position.set((t - 0.5) * w * 0.8, baseY + bodyH + 0.02 + Math.sin(t * Math.PI) * 0.08 + (i % 3) * 0.012, ((i * 37) % 7) / 7 * 0.16 - 0.08);
-    c.rotation.set(0.4 + (i % 4) * 0.3, i, 0.2 * (i % 3));
-    g.add(c);
+  // hands showing "too early!" (a funny 6:55)
+  const hand = (len: number, wid: number, angle: number) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(wid, len, 0.01), dark);
+    m.geometry.translate(0, len / 2, 0);
+    m.position.z = r * 0.3;
+    m.rotation.z = -angle;
+    body.add(m);
+  };
+  hand(r * 0.45, r * 0.09, Math.PI * 2 * (6.9 / 12));
+  hand(r * 0.68, r * 0.06, Math.PI * 2 * (55 / 60));
+  const pin = new THREE.Mesh(new THREE.CircleGeometry(r * 0.08, 12), brass);
+  pin.position.z = r * 0.31;
+  body.add(pin);
+  // two bells on top, slightly tilted outwards, and the hammer between them
+  for (const s of [-1, 1]) {
+    const bell = new THREE.Mesh(new THREE.SphereGeometry(r * 0.32, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2), brass);
+    bell.position.set(s * r * 0.55, r * 0.92, 0);
+    bell.rotation.z = -s * 0.5;
+    body.add(bell);
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.04, r * 0.04, r * 0.25, 8), brass);
+    stem.position.set(s * r * 0.45, r * 0.88, 0);
+    stem.rotation.z = -s * 0.5;
+    body.add(stem);
+    // little feet
+    const foot = new THREE.Mesh(new THREE.SphereGeometry(r * 0.13, 10, 8), dark);
+    foot.scale.y = 0.6;
+    foot.position.set(s * r * 0.6, -r * 0.98, 0);
+    body.add(foot);
   }
-  const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.06), mat(0xe8384f, { metalness: 0.2, roughness: 0.15, emissive: 0x500010, emissiveIntensity: 0.4 }));
-  gem.position.set(w * 0.12, baseY + bodyH + 0.1, 0.05);
-  g.add(gem);
-
-  // arched lid, hinged at the back and propped open a little
-  const lid = new THREE.Group();
-  lid.position.set(0, baseY + bodyH, -d / 2);
-  const lidShell = new THREE.Mesh(new THREE.CylinderGeometry(lidR, lidR, w, 20, 1, false, 0, Math.PI), wood2);
-  lidShell.rotation.z = Math.PI / 2;
-  lidShell.rotation.y = Math.PI / 2;
-  lidShell.position.set(0, 0, d / 2);
-  lidShell.scale.set(1, 1, d / 2 / lidR);
-  lid.add(lidShell);
-  for (const x of [-w / 2 + 0.07, 0, w / 2 - 0.07]) {
-    const band = new THREE.Mesh(new THREE.TorusGeometry(lidR + 0.005, 0.016, 6, 16, Math.PI), iron);
-    band.rotation.y = Math.PI / 2;
-    band.position.set(x, 0, d / 2);
-    band.scale.set(1, 1, d / 2 / lidR);
-    lid.add(band);
-  }
-  lid.rotation.x = -0.5;
-  g.add(lid);
-
-  // iron bands and corner brackets on the box
-  for (const x of [-w / 2 + 0.07, w / 2 - 0.07]) {
-    const band = new THREE.Mesh(new THREE.BoxGeometry(0.05, bodyH + 0.01, d + 0.02), iron);
-    band.position.set(x, baseY + bodyH / 2, 0);
-    g.add(band);
-  }
-  for (const sx of [-1, 1]) {
-    for (const sy of [0, 1]) {
-      const br = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.02), iron);
-      br.position.set(sx * (w / 2 - 0.05), baseY + 0.05 + sy * (bodyH - 0.1), d / 2 + 0.01);
-      g.add(br);
-    }
-  }
-  // lock plate with a keyhole
-  const plate = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.15, 0.02), gold);
-  plate.position.set(0, baseY + bodyH - 0.08, d / 2 + 0.012);
-  g.add(plate);
-  const hole = new THREE.Mesh(new THREE.CircleGeometry(0.02, 10), mat(0x1a1208));
-  hole.position.set(0, baseY + bodyH - 0.075, d / 2 + 0.024);
-  g.add(hole);
-
-  // a few coins spilled into the soil in front
-  for (let i = 0; i < 4; i++) {
-    const c = new THREE.Mesh(coinGeo, gold);
-    c.position.set(-w * 0.35 + i * 0.13, baseY + 0.02, d / 2 + 0.06);
-    c.rotation.set(Math.PI / 2 - 0.3, 0, i * 0.7);
-    g.add(c);
-  }
-  // half buried: tilted a bit
-  g.rotation.z = -0.07;
+  const hammer = new THREE.Group();
+  hammer.position.set(0, r * 0.95, 0);
+  const arm = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.025, r * 0.025, r * 0.4, 6), dark);
+  arm.position.y = r * 0.2;
+  hammer.add(arm);
+  const knob = new THREE.Mesh(new THREE.SphereGeometry(r * 0.07, 10, 8), brass);
+  knob.position.y = r * 0.4;
+  hammer.add(knob);
+  body.add(hammer);
+  // winding key at the back
+  const key = new THREE.Mesh(new THREE.TorusGeometry(r * 0.14, r * 0.035, 8, 16), brass);
+  key.position.set(r * 0.75, r * 0.2, -r * 0.3);
+  key.rotation.y = Math.PI / 2;
+  body.add(key);
+  // half buried: tilted a bit, a lump of earth at its feet
+  body.rotation.z = 0.14;
+  const lump = new THREE.Mesh(new THREE.SphereGeometry(r * 0.7, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat(0x7a5032));
+  lump.scale.set(1.5, 0.35, 0.6);
+  lump.position.set(-r * 0.2, -r * 1.05, r * 0.15);
+  g.add(lump);
+  g.position.y = -r * 0.05;
+  g.userData.hammer = hammer;
+  g.userData.ring = (t: number, k: number) => {
+    hammer.rotation.z = Math.sin(t * 60) * 0.6 * k;
+    body.rotation.z = 0.14 + Math.sin(t * 47) * 0.06 * k;
+    body.position.x = Math.sin(t * 53) * 0.015 * k;
+    body.position.y = Math.abs(Math.sin(t * 31)) * 0.02 * k;
+  };
   return g;
 }
 

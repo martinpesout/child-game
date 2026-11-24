@@ -53,7 +53,7 @@ export const LINES = {
   l4hole: 'Zalez dovnitř, vyhrabeš se k pokladům!',
   l4worm: 'Ahoj, kopáči! Sluníčko je nahoře!',
   l4stone: 'Kamínek nejde, zkus to jinudy.',
-  l4chest: 'Ta truhla je moc těžká, i pro krtka!',
+  l4clock: 'Crrr! Kdo tady zakopal budík? Teď jsem úplně vzhůru!',
   l4beetle: 'Chrrr… Cože? Kdo mě budí? No nic, dobrou!',
   l4dino: 'Cvak cvak! Neboj, to je jen stará kostra.',
   l4finish: 'Děkuju, kamaráde! Teď máme plnou spíž.',

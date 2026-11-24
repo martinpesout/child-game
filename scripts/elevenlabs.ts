@@ -8,7 +8,7 @@ const FALLBACK: Partial<Record<Speaker, Speaker>> = { mole: 'hedgehog', worm: 'b
 /** Who says each line – each character can get its own ElevenLabs voice. */
 export function speakerFor(id: LineId): Speaker {
   if (id === 'story' || id === 'l2story' || id === 'l3story' || id === 'l4story') return 'narrator';
-  if (id === 'l4worm' || id === 'l4stone' || id === 'l4chest') return 'worm';
+  if (id === 'l4worm' || id === 'l4stone' || id === 'l4clock') return 'worm';
   if (id === 'l4beetle' || id === 'l4dino') return 'beetle';
   if (id.startsWith('l4')) return 'mole';
   if (id.startsWith('l2')) return 'squirrel';

@@ -402,7 +402,8 @@ export class Level4Tree extends LevelBase {
         break;
       case 'big':
         this.stoneCooldown = STONE_COOLDOWN;
-        this.sayUnder(e.big === 'chest' ? 'l4chest' : e.big === 'dino' ? 'l4dino' : 'l4stone', e.obj);
+        if (e.big === 'clock') this.events.onRing?.();
+        this.sayUnder(e.big === 'clock' ? 'l4clock' : e.big === 'dino' ? 'l4dino' : 'l4stone', e.obj);
         break;
       case 'item':
         if (e.item) {

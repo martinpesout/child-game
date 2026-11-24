@@ -144,12 +144,14 @@ it('políčka hlíny jsou od sebe vidět (mezera a střídavý odstín)', () => 
   u.dispose();
 });
 
-it('truhla a kostra dinosaura jsou podrobné modely, které se vejdou do svých políček', async () => {
-  const { makeChest, makeDino } = await import('../../src/world/buried');
+it('budík a kostra dinosaura jsou podrobné modely, které se vejdou do svých políček', async () => {
+  const { makeClock, makeDino } = await import('../../src/world/buried');
   const meshes = (o: THREE.Object3D) => { let n = 0; o.traverse((c) => { if ((c as THREE.Mesh).isMesh) n++; }); return n; };
-  const chest = makeChest(1.1, 1.08);
-  const cb = new THREE.Box3().setFromObject(chest);
-  expect(meshes(chest)).toBeGreaterThan(20);
+  const clock = makeClock(1.1, 1.08);
+  const cb = new THREE.Box3().setFromObject(clock);
+  expect(meshes(clock)).toBeGreaterThan(15);
+  expect(clock.userData.hammer).toBeTruthy();
+  expect(clock.userData.ring).toBeTypeOf('function');
   expect(cb.max.x - cb.min.x).toBeLessThan(1.25);
   expect(cb.max.y - cb.min.y).toBeLessThan(1.2);
   const dino = makeDino(2.85, 1.2);
@@ -158,4 +160,19 @@ it('truhla a kostra dinosaura jsou podrobné modely, které se vejdou do svých 
   expect(db.max.x - db.min.x).toBeLessThan(3.1);
   expect(db.max.y - db.min.y).toBeLessThan(1.3);
   expect(dino.userData.jaw).toBeTruthy();
+});
+
+it('budík se po narazení rozdrnčí: kladívko buší a budík se třese', async () => {
+  const d: MazeDef = { rows: ['RRRER', 'o....', '.....'], entry: { x: 0, y: 1 }, bigs: [{ kind: 'clock', x: 2, y: 1, w: 1, h: 1 }], items: [], friends: [] };
+  const u = new Underground(d);
+  u.enter();
+  run(u, 1 / 60);
+  u.debugPlace(1, 1);
+  run(u, 0.05, { x: 1, y: 0 });
+  const ev = tapOnce(u);
+  expect(ev).toContain('big');
+  expect(u.clockRinging).toBe(true);
+  run(u, 2.5);
+  expect(u.clockRinging).toBe(false);
+  u.dispose();
 });

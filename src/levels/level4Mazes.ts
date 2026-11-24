@@ -14,7 +14,7 @@ export const LEVEL4_MAZES: [MazeDef, MazeDef] = [
     ],
     entry: { x: 0, y: 1 },
     bigs: [
-      { kind: 'chest', x: 5, y: 1, w: 2, h: 2 },
+      { kind: 'clock', x: 5, y: 1, w: 2, h: 2 },
       { kind: 'boot', x: 10, y: 4, w: 1, h: 1 },
     ],
     items: [{ kind: 'carrot', x: 10, y: 3 }],

@@ -268,3 +268,14 @@ it('hrabání použije nahraný zvuk, jakmile se načte (pokaždé trochu jinak 
   expect(clip.length).toBe(2);
   expect(clip[1].rate).toBeLessThan(1); // crumble plays it deeper
 });
+
+it('budík drnčí: ztlumeno nic, jinak zvuk', () => {
+  const s = new Sfx();
+  s.unlock();
+  s.setMuted(true);
+  s.ring();
+  expect(FakeCtx.oscillators).toBe(0);
+  s.setMuted(false);
+  s.ring();
+  expect(FakeCtx.oscillators).toBeGreaterThan(8);
+});

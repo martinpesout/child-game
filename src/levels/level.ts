@@ -25,6 +25,8 @@ export interface LevelEvents {
   onSink?(): void;
   /** A paw tap: on a mound, on soil underground, or against something that can't be dug. */
   onDig?(kind: 'mound' | 'soil' | 'crumble' | 'blocked'): void;
+  /** The buried alarm clock goes off. */
+  onRing?(): void;
   /** The hamster bumped into a puddle. */
   onSplash?(): void;
 }

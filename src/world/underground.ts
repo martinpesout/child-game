@@ -4,7 +4,7 @@ import { PartKit } from '../characters/parts';
 import { Worm, Beetle } from '../characters/critters4';
 import { MazeGrid, toDir, type BigKind, type MazeDef } from '../levels/maze';
 import { makeTreat } from './treats';
-import { makeChest, makeDino } from './buried';
+import { makeClock, makeDino } from './buried';
 import { DirtFx } from './digfx';
 import { makeRootBand } from './roots';
 import type { Body } from '../physics/physics';
@@ -54,6 +54,8 @@ export class Underground {
   private readonly highlight: THREE.LineSegments;
   private readonly sunbeam: THREE.Mesh;
   private skull: THREE.Object3D | null = null;
+  private clock: THREE.Object3D | null = null;
+  private clockT = -1;
   private skullT = -1;
   private aspect = 4 / 3;
   private dist = 8;
@@ -100,6 +102,11 @@ export class Underground {
   /** Who gives hints down here (the worm or the beetle). */
   get speaker(): THREE.Object3D {
     return (this.worm ?? this.beetle)?.root ?? this.hamster.root;
+  }
+
+  /** The buried alarm clock is ringing (for tests). */
+  get clockRinging(): boolean {
+    return this.clockT >= 0;
   }
 
   get moving(): boolean {
@@ -284,6 +291,7 @@ export class Underground {
       if (r.bigKind && this.bigCooldown === 0) {
         this.bigCooldown = BIG_REPEAT;
         ev.push({ type: 'big', big: r.bigKind, obj: this.hamster.root });
+        if (r.bigKind === 'clock') this.clockT = 0;
         if (r.bigKind === 'dino') {
           this.skullT = 0;
           this.beetle?.startle();
@@ -354,6 +362,12 @@ export class Underground {
     this.roots.forEach((r, i) => (r.rotation.z = Math.sin(this.t * 1.3 + i) * 0.08));
     (this.sunbeam.material as THREE.MeshBasicMaterial).opacity = 0.3 + 0.15 * Math.sin(this.t * 3) + (this.introT >= 0 ? 0.2 : 0);
     this.fx.update(dt);
+    if (this.clock && this.clockT >= 0) {
+      this.clockT += dt;
+      const k = Math.max(0, 1 - this.clockT / 2.2);
+      (this.clock.userData.ring as (t: number, k: number) => void)(this.t, k);
+      if (this.clockT >= 2.2) this.clockT = -1;
+    }
     this.worm?.update(dt);
     this.beetle?.update(dt);
     if (this.skull && this.skullT >= 0) {
@@ -500,8 +514,9 @@ export class Underground {
     const g = new THREE.Group();
     g.position.set(cx, cy, z);
     s.add(g);
-    if (big.kind === 'chest') {
-      g.add(makeChest(big.w * C * 0.92, big.h * C * 0.9));
+    if (big.kind === 'clock') {
+      this.clock = makeClock(big.w * C * 0.95, big.h * C * 0.95);
+      g.add(this.clock);
     } else if (big.kind === 'dino') {
       const dino = makeDino(big.w * C * 0.95, big.h * C);
       g.add(dino);

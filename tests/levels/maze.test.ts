@@ -7,7 +7,7 @@ const def = (): MazeDef => ({
     '.....',
   ],
   entry: { x: 0, y: 1 },
-  bigs: [{ kind: 'chest', x: 4, y: 2, w: 1, h: 1 }],
+  bigs: [{ kind: 'clock', x: 4, y: 2, w: 1, h: 1 }],
   items: [{ kind: 'carrot', x: 1, y: 1 }],
   friends: [{ kind: 'worm', x: 0, y: 2 }],
 });
@@ -45,7 +45,7 @@ it('velká věc vrátí svůj druh při pokusu o hrabání', () => {
   g.move(1, 0);
   const r = g.dig();
   expect(r.result).toBe('blocked');
-  expect(r.bigKind).toBe('chest');
+  expect(r.bigKind).toBe('clock');
 });
 
 it('východ jde prohrabat jen ve svém políčku a nastaví exited', () => {

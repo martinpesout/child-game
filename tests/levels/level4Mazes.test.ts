@@ -20,9 +20,9 @@ it('řada 0 jsou kořeny kromě jediného východu', () => {
   }
 });
 
-it('truhla 2×2 v bludišti 1, dinosaurus aspoň 5×2 v bludišti 2', () => {
+it('budík 2×2 v bludišti 1, dinosaurus aspoň 5×2 v bludišti 2', () => {
   const [a, b] = LEVEL4_MAZES;
-  expect(a.bigs.find((x) => x.kind === 'chest')).toMatchObject({ w: 2, h: 2 });
+  expect(a.bigs.find((x) => x.kind === 'clock')).toMatchObject({ w: 2, h: 2 });
   const dino = b.bigs.find((x) => x.kind === 'dino')!;
   expect(dino.w).toBeGreaterThanOrEqual(5);
   expect(dino.h).toBeGreaterThanOrEqual(2);

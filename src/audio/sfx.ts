@@ -218,6 +218,15 @@ export class Sfx {
     }
   }
 
+  /** Old alarm clock going off: a fast metallic brrring for about two seconds. */
+  ring(): void {
+    for (let i = 0; i < 32; i++) {
+      const f = i % 2 ? 2350 : 2650;
+      this.tone(f, 0.05, 'triangle', 0.09 * (1 - i / 40), i * 0.06);
+      this.tone(f * 2.76, 0.04, 'sine', 0.03 * (1 - i / 40), i * 0.06);
+    }
+  }
+
   /** Paw against a stone: a dull knock. */
   thud(): void {
     this.tone(150, 0.12, 'sine', 0.25, 0, 90);
