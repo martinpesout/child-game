@@ -1,4 +1,4 @@
-import { stepBody, topHeightAt, type Body, type PhysicsWorld } from '../../src/physics/physics';
+import { moveCollider, stepBody, supportOf, topHeightAt, type Body, type Collider, type PhysicsWorld } from '../../src/physics/physics';
 
 const body = (x = 0, z = 0, y = 0): Body => ({ pos: { x, y, z }, vel: { x: 0, y: 0, z: 0 }, radius: 0.25, grounded: true });
 const run = (b: Body, w: PhysicsWorld, seconds: number, wish = { x: 0, z: 0 }, jump = false, dt = 1 / 60) => {
@@ -72,4 +72,73 @@ it('z hrany kamene sklouzne dolů, nezasekne se', () => {
   run(b, w, 2, { x: 1, z: 0 });
   expect(b.pos.y).toBe(0);
   expect(b.pos.x).toBeGreaterThan(2);
+});
+
+describe('pohyblivé překážky', () => {
+  const on = (c: Collider): Body => body(c.x, c.z, c.height);
+  const idle = { x: 0, z: 0 };
+
+  it('supportOf vrátí kámen, na kterém tělo stojí, a null na zemi', () => {
+    const c: Collider = { kind: 'cylinder', x: 0, z: 0, radius: 0.5, height: 0.3 };
+    const w: PhysicsWorld = { colliders: [c], bounds: { halfSize: 20 } };
+    const b = on(c);
+    stepBody(b, idle, false, 1 / 60, w);
+    expect(supportOf(b, w)).toBe(c);
+    const g = body(3, 0, 0);
+    stepBody(g, idle, false, 1 / 60, w);
+    expect(supportOf(g, w)).toBeNull();
+  });
+
+  it('tělo se veze s posunutou překážkou', () => {
+    const c: Collider = { kind: 'box', x: 0, z: 0, halfX: 0.45, halfZ: 0.45, height: 0.3 };
+    const w: PhysicsWorld = { colliders: [c], bounds: { halfSize: 20 } };
+    const b = on(c);
+    stepBody(b, idle, false, 1 / 60, w);
+    for (let i = 0; i < 60; i++) {
+      moveCollider(c, { x: c.x + 0.01, z: c.z, height: c.height }, [b], w);
+      stepBody(b, idle, false, 1 / 60, w);
+    }
+    expect(b.pos.x).toBeCloseTo(0.6, 1);
+    expect(b.grounded).toBe(true);
+    expect(supportOf(b, w)).toBe(c);
+  });
+
+  it('klesající překážka nese tělo dolů', () => {
+    const c: Collider = { kind: 'cylinder', x: 0, z: 0, radius: 0.5, height: 0.6 };
+    const w: PhysicsWorld = { colliders: [c], bounds: { halfSize: 20 } };
+    const b = on(c);
+    stepBody(b, idle, false, 1 / 60, w);
+    for (let i = 0; i < 40; i++) {
+      moveCollider(c, { x: c.x, z: c.z, height: c.height - 0.01 }, [b], w);
+      stepBody(b, idle, false, 1 / 60, w);
+      expect(b.pos.y).toBeCloseTo(c.height, 3);
+      expect(b.grounded).toBe(true);
+    }
+  });
+
+  it('skok z jedoucí překážky je stejně vysoký jako z pevné', () => {
+    const jumpPeak = (moving: boolean) => {
+      const c: Collider = { kind: 'box', x: 0, z: 0, halfX: 0.9, halfZ: 0.45, height: 0.3 };
+      const w: PhysicsWorld = { colliders: [c], bounds: { halfSize: 20 } };
+      const b = on(c);
+      stepBody(b, idle, false, 1 / 60, w);
+      let peak = 0;
+      for (let i = 0; i < 60; i++) {
+        if (moving) moveCollider(c, { x: c.x + 0.5 / 60, z: c.z, height: c.height }, [b], w);
+        stepBody(b, idle, i === 0, 1 / 60, w);
+        peak = Math.max(peak, b.pos.y);
+      }
+      return peak;
+    };
+    expect(Math.abs(jumpPeak(true) - jumpPeak(false))).toBeLessThan(0.02);
+  });
+
+  it('tělo na zemi vedle překážky se s ní nepohne', () => {
+    const c: Collider = { kind: 'box', x: 0, z: 0, halfX: 0.45, halfZ: 0.45, height: 0.3 };
+    const w: PhysicsWorld = { colliders: [c], bounds: { halfSize: 20 } };
+    const b = body(2, 0, 0);
+    stepBody(b, idle, false, 1 / 60, w);
+    moveCollider(c, { x: 0.3, z: 0, height: 0.3 }, [b], w);
+    expect(b.pos).toEqual({ x: 2, y: 0, z: 0 });
+  });
 });

@@ -59,15 +59,49 @@ export function topHeightAt(x: number, z: number, radius: number, world: Physics
   for (const c of world.colliders) {
     const cTop = colliderTop(c, world);
     if (cTop <= top) continue;
-    let inside: boolean;
-    if (c.kind === 'cylinder') inside = Math.hypot(x - c.x, z - c.z) < c.radius + m;
-    else {
-      const [lx, lz] = toLocal(c, x - c.x, z - c.z);
-      inside = Math.abs(lx) < c.halfX + m && Math.abs(lz) < c.halfZ + m;
-    }
-    if (inside) top = cTop;
+    if (isOver(c, x, z, m)) top = cTop;
   }
   return top;
+}
+
+/** Is (x, z) over the collider's top (footprint grown by `margin`)? */
+function isOver(c: Collider, x: number, z: number, margin: number): boolean {
+  if (c.kind === 'cylinder') return Math.hypot(x - c.x, z - c.z) < c.radius + margin;
+  const [lx, lz] = toLocal(c, x - c.x, z - c.z);
+  return Math.abs(lx) < c.halfX + margin && Math.abs(lz) < c.halfZ + margin;
+}
+
+/** The collider the body stands on (null when on the ground or in the air). */
+export function supportOf(body: Body, world: PhysicsWorld): Collider | null {
+  if (!body.grounded) return null;
+  const m = body.radius * STAND_MARGIN;
+  let best: Collider | null = null;
+  let bestTop = groundAt(body.pos.x, body.pos.z, world) + 1e-3;
+  for (const c of world.colliders) {
+    const cTop = colliderTop(c, world);
+    if (cTop < bestTop || Math.abs(cTop - body.pos.y) > 1e-3) continue;
+    if (!isOver(c, body.pos.x, body.pos.z, m)) continue;
+    best = c;
+    bestTop = cTop;
+  }
+  return best;
+}
+
+/** Moves a (kinematic) collider; bodies standing on it ride along (same shift and same change of its top). */
+export function moveCollider(c: Collider, to: { x: number; z: number; height: number }, bodies: Body[], world: PhysicsWorld): void {
+  const riders = bodies.filter((b) => supportOf(b, world) === c);
+  const top0 = colliderTop(c, world);
+  const dx = to.x - c.x;
+  const dz = to.z - c.z;
+  c.x = to.x;
+  c.z = to.z;
+  c.height = to.height;
+  const dy = colliderTop(c, world) - top0;
+  for (const b of riders) {
+    b.pos.x += dx;
+    b.pos.z += dz;
+    b.pos.y += dy;
+  }
 }
 
 export function stepBody(body: Body, wish: { x: number; z: number }, jump: boolean, dt: number, world: PhysicsWorld): void {
