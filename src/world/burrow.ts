@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { Pen } from '../levels/level4Data';
 import { penColliders } from '../levels/level4Data';
+import { makeRootArch, makeTreeRoots } from './roots';
 
 /** Surface visuals of level 4: the big tree, dirt mounds, holes, molehills, root fences, falling leaves. */
 
@@ -23,13 +24,7 @@ export function makeBigTree(r: number): THREE.Group {
   const trunk = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.8, r, 4.2, 14), bark);
   trunk.position.y = 2.1;
   root.add(trunk);
-  for (let i = 0; i < 6; i++) {
-    const a = (i / 6) * Math.PI * 2 + 0.3;
-    const rt = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.22, 1.6, 6), bark);
-    rt.position.set(Math.cos(a) * (r + 0.4), 0.12, Math.sin(a) * (r + 0.4));
-    rt.rotation.set(Math.sin(a) * 1.35, 0, -Math.cos(a) * 1.35);
-    root.add(rt);
-  }
+  root.add(makeTreeRoots(r, 7));
   const crown = new THREE.Group();
   crown.position.y = 4.6;
   const leaf = mat(0x4f9e3d);
@@ -127,20 +122,54 @@ export function makeMolehill(): THREE.Group {
   return shadowy(root);
 }
 
-/** Gnarly root fence around a pen, one post per physics collider. */
+/** Gnarly root fence around a pen: roots arching in and out of the ground, woven in two rows (physics stays the post ring). */
 export function makeRootFence(p: Pen): THREE.Group {
   const root = new THREE.Group();
-  const bark = mat(0x6b4429);
+  const barks = [mat(0x6b4429), mat(0x5a3a20), mat(0x7a4e2d)];
+  const moss = mat(0x6f9e4a);
+  const posts = penColliders(p).filter((c) => c.kind === 'cylinder');
+  const n = posts.length;
+  for (let row = 0; row < 2; row++) {
+    const k = row === 0 ? 1.0 : 1.08; // second row slightly outside
+    const step = 3;
+    for (let i = row; i < n; i += step - 1) {
+      const a = posts[i % n];
+      const b = posts[(i + step) % n];
+      const A = new THREE.Vector3(p.x + (a.x - p.x) * k, 0, p.z + (a.z - p.z) * k);
+      const B = new THREE.Vector3(p.x + (b.x - p.x) * k, 0, p.z + (b.z - p.z) * k);
+      const arch = makeRootArch(A, B, 1.0 + ((i * 7) % 5) * 0.08 - row * 0.15, i * 3 + row, barks[(i + row) % 3], 0.15 - row * 0.03);
+      root.add(arch);
+      if (i % 4 === 0) {
+        const m = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 6), moss);
+        m.scale.set(1.3, 0.5, 1);
+        m.position.copy(A).lerp(B, 0.5);
+        m.position.y = 0.95 - row * 0.15;
+        root.add(m);
+      }
+    }
+  }
+  // low, thick roots filling the gaps under the arches, so the fence looks closed
+  for (let i = 0; i < n; i += 2) {
+    const a = posts[i % n];
+    const b = posts[(i + 2) % n];
+    const k = 0.96 + (i % 4) * 0.04;
+    const A = new THREE.Vector3(p.x + (a.x - p.x) * k, 0, p.z + (a.z - p.z) * k);
+    const B = new THREE.Vector3(p.x + (b.x - p.x) * k, 0, p.z + (b.z - p.z) * k);
+    root.add(makeRootArch(A, B, 0.38 + (i % 3) * 0.12, 100 + i, barks[i % 3], 0.17));
+  }
+  // knobbly bases where roots dive into the earth, and some ferns
+  const dirt = mat(0x7a5032);
   const fern = mat(0x4e9a3a);
-  penColliders(p).forEach((c, i) => {
-    if (c.kind !== 'cylinder') return;
-    const post = new THREE.Mesh(new THREE.CylinderGeometry(c.radius * 0.7, c.radius, c.height + 0.1 + (i % 3) * 0.12, 7), bark);
-    post.position.set(c.x, (c.height + 0.1) / 2, c.z);
-    post.rotation.z = Math.sin(i * 1.7) * 0.12;
-    root.add(post);
-    if (i % 3 === 0) {
-      const f = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.5, 5), fern);
-      f.position.set(c.x, 0.25, c.z);
+  posts.forEach((c, i) => {
+    if (i % 2 === 0) {
+      const knob = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), dirt);
+      knob.scale.y = 0.35;
+      knob.position.set(c.x, 0.02, c.z);
+      root.add(knob);
+    }
+    if (i % 5 === 0) {
+      const f = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.45, 5), fern);
+      f.position.set(p.x + (c.x - p.x) * 1.12, 0.22, p.z + (c.z - p.z) * 1.12);
       root.add(f);
     }
   });

@@ -6,6 +6,7 @@ import { MazeGrid, toDir, type BigKind, type MazeDef } from '../levels/maze';
 import { makeTreat } from './treats';
 import { makeChest, makeDino } from './buried';
 import { DirtFx } from './digfx';
+import { makeRootBand } from './roots';
 import type { Body } from '../physics/physics';
 import type { ItemKind } from '../levels/level1Data';
 
@@ -440,15 +441,6 @@ export class Underground {
           const b = new THREE.Mesh(box, mat(0x7a5131));
           b.position.copy(c);
           s.add(b);
-          if (x !== def.entry.x) {
-            const root = new THREE.Group();
-            const r1 = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, C * 1.1, 5), mat(0x5a3a20));
-            r1.rotation.z = 0.6 + (x % 3) * 0.3;
-            root.add(r1);
-            root.position.set(c.x, c.y, D / 2 + 0.03);
-            s.add(root);
-            this.roots.push(root);
-          }
         } else if (k === 'big') {
           const b = new THREE.Mesh(box, this.soilMat);
           b.position.copy(c);
@@ -476,6 +468,11 @@ export class Underground {
     const bloom = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), mat(0xffd84d));
     bloom.position.set(ex.x, C / 2 + 0.6, D / 2);
     s.add(bloom);
+
+    // network of roots under the grass (not over the entry shaft or the exit), rootlets dangling below
+    const band = makeRootBand(left + 0.6, right - 0.6, C / 2, C, [def.entry.x * C, this.exitCell.x * C], 3, D / 2 + 0.04);
+    s.add(band);
+    this.roots.push(...(band.userData.hanging as THREE.Object3D[]));
 
     for (const big of def.bigs) this.buildBig(big);
 
