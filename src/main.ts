@@ -44,7 +44,9 @@ resize();
 // --- services ----------------------------------------------------------------
 const touch = new TouchController(canvas);
 const input = new CombinedController([new KeyboardController(window), touch]);
-const sfx = new Sfx();
+// optional custom background track: drop src/assets/music/theme.mp3 (or .m4a) in, otherwise the generated melody plays
+const musicTrack = Object.values(import.meta.glob('./assets/music/theme.{mp3,m4a}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>)[0];
+const sfx = new Sfx(musicTrack);
 const voice = new VoiceLines(new Speech(), bundledClips(), (url) => sfx.playClip(url));
 
 const progress = new LevelProgress(LEVELS.length);
@@ -263,7 +265,7 @@ function onPlay() {
   voice.prime();
   sfx.click();
   sfx.startAmbience();
-  sfx.startMusic();
+  void sfx.startMusic();
   try {
     void document.documentElement.requestFullscreen?.().catch(() => {});
   } catch {

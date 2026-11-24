@@ -147,3 +147,33 @@ it('cáknutí do kaluže: ztlumeno nic, jinak zvuk', () => {
   s.splash();
   expect(FakeCtx.oscillators).toBeGreaterThan(0);
 });
+
+it('vlastní skladba: když je k dispozici, hraje ve smyčce místo generované melodie', async () => {
+  const s = new Sfx('music/theme.mp3');
+  s.unlock();
+  const ctx = (s as unknown as { ctx: FakeCtx & { decodeAudioData?: unknown } }).ctx;
+  (ctx as unknown as { decodeAudioData: () => Promise<object> }).decodeAudioData = async () => ({ duration: 60 });
+  const sources: { loop?: boolean }[] = [];
+  vi.spyOn(ctx, 'createBufferSource').mockImplementation(() => {
+    const src = Object.assign(new FakeNode(), { buffer: null, loop: false, start() {}, stop() {} });
+    sources.push(src);
+    return src as never;
+  });
+  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) })));
+  const oscBefore = FakeCtx.oscillators;
+  await s.startMusic();
+  expect(sources.some((x) => x.loop)).toBe(true);
+  expect(FakeCtx.oscillators).toBe(oscBefore); // no generated melody notes
+  s.stopMusic();
+});
+
+it('když vlastní skladba chybí, hraje generovaná melodie', async () => {
+  vi.useFakeTimers();
+  const s = new Sfx(undefined);
+  s.unlock();
+  await s.startMusic();
+  vi.advanceTimersByTime(300);
+  expect(FakeCtx.oscillators).toBeGreaterThan(0);
+  s.stopMusic();
+  vi.useRealTimers();
+});

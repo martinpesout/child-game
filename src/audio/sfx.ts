@@ -41,6 +41,8 @@ const MELODY: (number | null)[] = [
   11, null, 7, null, 14, null, 11, null,
 ];
 const MUSIC_VOL = 0.7;
+/** Volume of a custom music track relative to the master (tracks are mastered loud). */
+const TRACK_VOL = 0.45;
 const LOOKAHEAD = 0.25;
 
 export class Sfx {
@@ -210,8 +212,40 @@ export class Sfx {
     this.tone(880, 0.06, 'sine', 0.15, 0, 660);
   }
 
-  /** Quiet looping background melody. */
-  startMusic(): void {
+  constructor(private readonly musicUrl?: string) {}
+
+  private musicSrc: AudioBufferSourceNode | null = null;
+  private musicOn = false;
+
+  /** Background music: the custom track (e.g. from Suno) looped if available, else the generated melody. */
+  async startMusic(): Promise<void> {
+    if (this.musicOn || !this.ctx) return;
+    this.musicOn = true;
+    if (this.musicUrl) {
+      const ctx = this.ctx;
+      try {
+        const res = await fetch(this.musicUrl);
+        if (!res.ok) throw new Error('missing');
+        const buf = await ctx.decodeAudioData(await res.arrayBuffer());
+        if (!this.musicOn || !this.master) return;
+        const gain = ctx.createGain();
+        gain.gain.value = TRACK_VOL;
+        gain.connect(this.master);
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.loop = true;
+        src.connect(gain);
+        src.start();
+        this.musicSrc = src;
+        return;
+      } catch {
+        /* fall back to the generated melody */
+      }
+    }
+    this.startGeneratedMusic();
+  }
+
+  private startGeneratedMusic(): void {
     if (this.musicTimer || !this.ctx) return;
     this.ensureMusicBus();
     this.musicStep = 0;
@@ -234,8 +268,15 @@ export class Sfx {
   }
 
   stopMusic(): void {
+    this.musicOn = false;
     if (this.musicTimer) clearInterval(this.musicTimer);
     this.musicTimer = null;
+    try {
+      this.musicSrc?.stop();
+    } catch {
+      /* already stopped */
+    }
+    this.musicSrc = null;
   }
 
   /** Music bus: soft low-pass + a little echo, so the music sits gently behind the effects. */
