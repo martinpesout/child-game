@@ -218,3 +218,21 @@ it('3× setup/dispose nenechá ve scéně nic navíc a view3d je po dispose null
     expect(scene.children.length).toBe(base);
   }
 });
+
+it('tlapka se ukáže, i když křeček stojí jen u okraje hromádky (ne na ní)', () => {
+  const { l } = setup();
+  const m = LEVEL4.mounds[0];
+  put(l, m.x + 0.3, m.z + 0.9);
+  expect(l.actionMode).toBe('dig');
+  put(l, m.x, m.z + 1.6);
+  expect(l.actionMode).toBe('jump');
+  l.dispose();
+});
+
+it('pod zemí tlačítko ukazuje tlapku', () => {
+  const { l } = setup();
+  enterPen(l, 0);
+  expect(l.mode).toBe('underground');
+  expect(l.actionMode).toBe('dig');
+  l.dispose();
+});

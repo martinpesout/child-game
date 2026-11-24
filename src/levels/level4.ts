@@ -12,8 +12,8 @@ import { LEVEL4, penColliders, type Pen } from './level4Data';
 import { LEVEL4_MAZES } from './level4Mazes';
 import { LevelBase, type ActionMode, type LevelLayout, type Treat } from './levelBase';
 
-const DIG_REACH = 0.8;
-const HOLE_REACH = 0.9;
+const DIG_REACH = 1.1;
+const HOLE_REACH = 1.1;
 const TAPS = 3;
 const IRIS = 1.0; // whole transition (close + open)
 const CHEER_COOLDOWN = 8;
@@ -62,6 +62,11 @@ export class Level4Tree extends LevelBase {
 
   get goal() {
     return { done: this.done, total: LEVEL4.mounds.length, icon: 'mound' };
+  }
+
+  /** Underground the button is always the paw. */
+  override get actionMode(): ActionMode {
+    return this.placeVal === 'underground' && !this.trans ? 'dig' : super.actionMode;
   }
 
   get npc(): Mole {

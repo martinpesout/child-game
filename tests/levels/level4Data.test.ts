@@ -56,3 +56,19 @@ it('hromádka se po vyhrabání zmenší na plocho', () => {
   m.setLeft(0);
   expect(h()).toBeLessThan(0.08);
 });
+
+it('díra je na straně louky (blíž ke stromu než ohrada)', () => {
+  for (const p of LEVEL4.pens) {
+    const dHole = Math.hypot(p.hole.x - LEVEL4.tree.x, p.hole.z - LEVEL4.tree.z);
+    const dPen = Math.hypot(p.x - LEVEL4.tree.x, p.z - LEVEL4.tree.z);
+    expect(dHole).toBeLessThan(dPen);
+  }
+});
+
+it('žádná hromádka není u díry ani u krtince (tlačítko nesmí váhat mezi hrabáním a zalezením)', () => {
+  for (const p of LEVEL4.pens) {
+    for (const spot of [p.hole, p.back, p.inside]) {
+      for (const m of LEVEL4.mounds) expect(Math.hypot(m.x - spot.x, m.z - spot.z)).toBeGreaterThan(2.4);
+    }
+  }
+});

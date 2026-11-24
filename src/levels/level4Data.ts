@@ -21,9 +21,10 @@ const pen = (x: number, z: number, side: 1 | -1): Pen => ({
   z,
   rx: 3.4,
   rz: 3.0,
-  hole: { x: x - side * 4.6, z: z + 1.2 },
-  inside: { x: x - side * 1.4, z: z + 1.3 },
-  back: { x: x - side * 1.6, z: z - 1.3 },
+  // `side` points from the pen towards the middle of the meadow: the hole is on that side
+  hole: { x: x + side * 4.6, z: z + 1.2 },
+  inside: { x: x + side * 1.8, z: z + 1.3 },
+  back: { x: x + side * 1.8, z: z - 1.3 },
 });
 
 const PENS: Pen[] = [pen(-11, -7, 1), pen(11, -7, -1)];
@@ -40,11 +41,12 @@ export const LEVEL4 = {
     { x: -4, z: 6, pen: 0 },
     { x: 4.5, z: 4, pen: 0 },
     { x: -5, z: -2, pen: 0 },
-    { x: 5, z: -6.5, pen: 0 },
-    { x: PENS[0].x + 1.2, z: PENS[0].z - 0.2, pen: 1 },
-    { x: PENS[0].x - 0.2, z: PENS[0].z - 0.4, pen: 1 },
-    { x: PENS[1].x - 1.2, z: PENS[1].z - 0.2, pen: 2 },
-    { x: PENS[1].x + 0.2, z: PENS[1].z - 0.4, pen: 2 },
+    { x: 3.5, z: -9.5, pen: 0 },
+    // inside the pens: on the far side from the molehills
+    { x: PENS[0].x - 1.5, z: PENS[0].z - 1.2, pen: 1 },
+    { x: PENS[0].x - 1.5, z: PENS[0].z + 1.2, pen: 1 },
+    { x: PENS[1].x + 1.5, z: PENS[1].z - 1.2, pen: 2 },
+    { x: PENS[1].x + 1.5, z: PENS[1].z + 1.2, pen: 2 },
   ] as { x: number; z: number; pen: 0 | 1 | 2 }[],
   /** Bonus treat on the surface, tucked behind the tree. */
   bonus: { kind: 'strawberry' as ItemKind, x: -0.6, z: -5.2 },

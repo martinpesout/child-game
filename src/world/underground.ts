@@ -43,6 +43,7 @@ export class Underground {
   private readonly blocks = new Map<string, THREE.Mesh>();
   private readonly treats = new Map<string, THREE.Object3D>();
   private readonly soilMat = mat(0xa0703f);
+  private readonly soilMat2 = mat(0x96683a);
   private readonly crackMat = mat(0x8a5d33);
   private readonly roots: THREE.Object3D[] = [];
   private readonly crumbs: { m: THREE.Mesh; v: THREE.Vector3; t: number }[] = [];
@@ -356,7 +357,7 @@ export class Underground {
 
     const cols = this.grid.cols;
     const rows = this.grid.rows;
-    const box = new THREE.BoxGeometry(C, C, D);
+    const box = new THREE.BoxGeometry(C * 0.94, C * 0.94, D);
     const left = -C / 2 - 0.6;
     const right = cols * C - C / 2 + 0.6;
     const width = right - left;
@@ -398,8 +399,9 @@ export class Underground {
         const c = this.cellCenter(x, y);
         const key = `${x},${y}`;
         if (k === 'soil' || k === 'exit') {
-          const b = new THREE.Mesh(box, k === 'exit' ? mat(0xb8834f, { emissive: 0xffc54a, emissiveIntensity: 0.35 }) : this.soilMat);
+          const b = new THREE.Mesh(box, k === 'exit' ? mat(0xb8834f, { emissive: 0xffc54a, emissiveIntensity: 0.35 }) : (x + y) % 2 ? this.soilMat2 : this.soilMat);
           b.position.copy(c);
+          b.userData.soil = true;
           s.add(b);
           this.blocks.set(key, b);
         } else if (k === 'stone') {

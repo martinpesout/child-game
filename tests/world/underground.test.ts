@@ -124,3 +124,15 @@ it('dispose uvolní geometrie', () => {
   for (const g of geoms) expect(done.has(g)).toBe(true);
   spy.mockRestore();
 });
+
+it('políčka hlíny jsou od sebe vidět (mezera a střídavý odstín)', () => {
+  const u = new Underground(small());
+  const soil: THREE.Mesh[] = [];
+  u.scene.traverse((o) => { if ((o as THREE.Mesh).userData?.soil) soil.push(o as THREE.Mesh); });
+  expect(soil.length).toBeGreaterThan(4);
+  const box = new THREE.Box3().setFromObject(soil[0]);
+  expect(box.max.x - box.min.x).toBeLessThan(0.6);
+  const colors = new Set(soil.map((m) => (m.material as THREE.MeshStandardMaterial).color.getHex()));
+  expect(colors.size).toBeGreaterThan(1);
+  u.dispose();
+});
