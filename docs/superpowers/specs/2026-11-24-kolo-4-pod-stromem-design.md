@@ -76,7 +76,7 @@ Dítě se učí nový úkon (ťukání tlapkou) a jednoduché plánování cesty
   - Velké věci zabírají víc políček v mřížce a chovají se jako kamínek (nejdou prohrabat ani projít); bludiště zůstává řešitelné (test).
 - Dobroty v hlíně: odkryjí se vyhrabáním svého políčka, křeček je sní.
 - **Východ**: v řadě kořenů, nad ním svítí paprsek slunce a kytička – vždy vidět. Vyhrabání východu = výstup (4.3).
-- Kamera: pevná, celé bludiště v záběru, mírně zepředu a shora (aby byla vidět hloubka), na iPadu na šířku vyplní obrazovku s okrajem pro joystick a tlačítko.
+- Kamera (upřesnění uživatele): když se bludiště nevejde, smí vodorovně sledovat křečka; cíl musí být naznačený – při vstupu krátký pohled na východ a šipka se sluníčkem na okraji obrazovky, když je východ mimo záběr. Jinak: pevná, celé bludiště v záběru, mírně zepředu a shora (aby byla vidět hloubka), na iPadu na šířku vyplní obrazovku s okrajem pro joystick a tlačítko.
 - Postavy: žížala (bludiště 1) a spící brouček – chroustek (bludiště 2) jako dekorativní kamarádi v kapsách; hláška při prvním přiblížení.
 
 ### 4.4b Živé podzemí i povrch (přání uživatele)

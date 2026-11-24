@@ -109,11 +109,12 @@
 - Produces:
   - `class Underground { readonly scene: THREE.Scene; readonly camera: THREE.PerspectiveCamera; readonly grid: MazeGrid; constructor(def: MazeDef, hamster: Hamster /* vlastní instance pro podzemí */); enter(): void /* křeček na vstup */; update(dt: number, move: {x: number; y: number}, tap: boolean): UndergroundEvent[]; hamsterScreen(): {x: number; y: number} /* 0..1 pro kolečko */; resize(aspect: number): void; dispose(): void }`
   - `type UndergroundEvent = { type: 'dig' | 'crack' | 'blocked' | 'item' | 'friend' | 'big' | 'exit' | 'leave'; item?: ItemKind; friend?: 'worm' | 'beetle'; big?: string }`
-  - Scéna: bloky hlíny (InstancedMesh, hloubka ~0,6 m), kamínky, kořeny, truhla (víko pootevřené, zlaťáky), kostra dinosaura (kulaté kosti, lebka s čelistí, která cvakne po `big` události), drobnosti (holínka, plechovka, kosti), pruh trávy se stromem a nebem nahoře, paprsek slunce + kytička nad východem (pulzuje), vstupní šachta; pevná kamera mírně zepředu a shora, celé bludiště v záběru (`resize` přepočítá vzdálenost podle poměru stran).
+  - Scéna: bloky hlíny (InstancedMesh, hloubka ~0,6 m), kamínky, kořeny, truhla (víko pootevřené, zlaťáky), kostra dinosaura (kulaté kosti, lebka s čelistí, která cvakne po `big` události), drobnosti (holínka, plechovka, kosti), pruh trávy se stromem a nebem nahoře, paprsek slunce + kytička nad východem (pulzuje), vstupní šachta; kamera mírně zepředu a shora; když se celé bludiště vejde (při rozumné velikosti křečka na iPadu), je pevná, jinak **vodorovně sleduje křečka** s omezením na okraje bludiště (`resize` přepočítá podle poměru stran). **Cíl je vždy naznačený:** při vstupu kamera krátce (~1,5 s) ukáže východ a vrátí se ke křečkovi; když je východ mimo záběr, na okraji obrazovky svítí šipka se sluníčkem ukazující k východu (`exitIndicator(): {x, y, angle} | null`). (Upřesnění uživatele.)
   - Pohyb: `move` → `toDir` → `grid.move` s tweenem 0,2 s (během tweenu se další krok nebere); `tap` (náběžná hrana) → `grid.dig()` + drobky + praskliny; zvýraznění políčka, kam křeček kouká; ambient: kořínky se kývají, tráva vlní, občas drobek.
   - `leave`: křeček stojí na vstupu a joystick míří nahoru (do šachty).
 - [ ] **Step 1: Failing tests**
-  - `celé bludiště je v záběru kamery` (projekce rohů mřížky do NDC v rozsahu ±0,95 pro poměr 4:3 i 16:9).
+  - `křeček je vždy v záběru a kamera nevyjede za okraj bludiště` (posun křečka přes celé bludiště, projekce do NDC ±0,95 pro 4:3 i 16:9).
+  - `při vstupu kamera ukáže východ a vrátí se ke křečkovi`; `exitIndicator je null, když je východ v záběru, jinak ukazuje jeho směrem`.
   - `hrabání vyhrabe políčko a vrátí události crack → dig`; `do kamínku blocked`.
   - `pohyb trvá ~0,2 s a během něj se další krok nebere`.
   - `vyhrabání východu vrátí exit`; `joystick nahoru na vstupu vrátí leave`.
