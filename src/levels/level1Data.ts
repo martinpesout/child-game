@@ -2,7 +2,7 @@ import type { Collider } from '../physics/physics';
 
 export type ItemKind = 'nut' | 'strawberry' | 'carrot' | 'apple';
 export interface ItemSpot { kind: ItemKind; x: number; z: number; y: number }
-export type PropType = 'bush' | 'rock' | 'house' | 'tree';
+export type PropType = 'bush' | 'rock' | 'house' | 'tree' | 'flowerbed' | 'fence' | 'can' | 'pot' | 'puddle' | 'tube' | 'wheel';
 export interface Prop { type: PropType; collider: Collider }
 
 const bush = (x: number, z: number, radius: number, height = 1.2): Prop => ({ type: 'bush', collider: { kind: 'cylinder', x, z, radius, height } });

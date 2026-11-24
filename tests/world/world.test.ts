@@ -1,11 +1,12 @@
 import * as THREE from 'three';
-import { buildMeadow } from '../../src/world/meadow';
+import { buildWorld } from '../../src/world/world';
+import { Terrain } from '../../src/world/terrain';
 import { LEVEL1 } from '../../src/levels/level1Data';
 import { OcclusionFader } from '../../src/world/occlusion';
 
 it('u spodního okraje zprůhlední plot i živý plot mezi kamerou a křečkem', () => {
   const scene = new THREE.Scene();
-  const m = buildMeadow(scene, LEVEL1);
+  const m = buildWorld(scene, { halfSize: LEVEL1.halfSize, terrain: Terrain.flat(), colliders: LEVEL1.colliders, props: LEVEL1.props, avoid: [], house: { ...LEVEL1.house, facing: LEVEL1.spawn } });
   const fader = new OcclusionFader(m.occluders);
   const hamster = new THREE.Vector3(0, 0, 19.6);
   const camera = new THREE.Vector3(0, 3, 19.6 + 4.5);

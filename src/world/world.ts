@@ -1,8 +1,7 @@
 import * as THREE from 'three';
 import type { Collider } from '../physics/physics';
-import type { LEVEL1 } from '../levels/level1Data';
-
-type LevelData = typeof LEVEL1;
+import type { Prop } from '../levels/level1Data';
+import { Terrain } from './terrain';
 
 const GRASS_COUNT = 3500;
 const FLOWER_COUNT = 260;
@@ -238,7 +237,7 @@ function makeHills(): THREE.Group {
 }
 
 function scatter(
-  data: LevelData,
+  data: { halfSize: number; colliders: Collider[] },
   count: number,
   pad: number,
   seed: number,
@@ -258,7 +257,18 @@ function scatter(
   return out;
 }
 
-export interface Meadow {
+export interface WorldSpec {
+  halfSize: number;
+  terrain: Terrain;
+  colliders: Collider[];
+  props: Prop[];
+  /** Spots kept free of grass and flowers (treats, paths). */
+  avoid: { x: number; z: number; r: number }[];
+  /** Hamster house with its door turned towards `facing` and a dirt patch in front. */
+  house?: { x: number; z: number; facing: { x: number; z: number } };
+}
+
+export interface World {
   readonly sun: THREE.DirectionalLight;
   /** Props that may hide the player and should fade out (bushes, rocks, tree, house). */
   readonly occluders: THREE.Object3D[];
@@ -266,33 +276,37 @@ export interface Meadow {
   dispose(): void;
 }
 
-/** Builds the meadow for a level: ground, grass, flowers, props, fence, sky and lights. */
-export function buildMeadow(scene: THREE.Scene, data: LevelData): Meadow {
+/** Builds a level's world: terrain, grass, flowers, props, fence, sky and lights. */
+export function buildWorld(scene: THREE.Scene, data: WorldSpec): World {
+  const terrain = data.terrain;
+  const H = (x: number, z: number) => terrain.height(x, z);
   const root = new THREE.Group();
   const r = rng(42);
 
   root.add(skyDome());
   scene.fog = new THREE.Fog(0xe8f7ff, 35, 85);
 
-  const ground = new THREE.Mesh(new THREE.CircleGeometry(80, 48), mat(0x86c95e));
-  ground.rotation.x = -Math.PI / 2;
+  const ground = terrain.amplitude ? terrain.mesh(160, 160, mat(0x86c95e)) : new THREE.Mesh(new THREE.CircleGeometry(80, 48), mat(0x86c95e));
+  if (!terrain.amplitude) ground.rotation.x = -Math.PI / 2;
   ground.receiveShadow = true;
+  ground.name = 'ground';
   root.add(ground);
-  // soft dirt patch in front of the house
-  // the house door looks towards the spawn point
-  const toSpawn = new THREE.Vector2(data.spawn.x - data.house.x, data.spawn.z - data.house.z).normalize();
-  const houseYaw = Math.atan2(-toSpawn.x, -toSpawn.y);
-  const patchPos = { x: data.house.x + toSpawn.x * 2.4, z: data.house.z + toSpawn.y * 2.4 };
-  const patch = new THREE.Mesh(new THREE.CircleGeometry(1.6, 32), mat(0xd8b27e));
-  patch.rotation.x = -Math.PI / 2;
-  patch.position.set(patchPos.x, 0.01, patchPos.z);
-  patch.receiveShadow = true;
-  root.add(patch);
 
-  const avoid = [
-    ...data.items.map((i) => ({ x: i.x, z: i.z, r: 0.5 })),
-    { x: patchPos.x, z: patchPos.z, r: 1.6 },
-  ];
+  const avoid = [...data.avoid];
+  let houseYaw = 0;
+  if (data.house) {
+    // the house door looks towards `facing`, with a soft dirt patch in front of it
+    const h = data.house;
+    const to = new THREE.Vector2(h.facing.x - h.x, h.facing.z - h.z).normalize();
+    houseYaw = Math.atan2(-to.x, -to.y);
+    const patchPos = { x: h.x + to.x * 2.4, z: h.z + to.y * 2.4 };
+    const patch = new THREE.Mesh(new THREE.CircleGeometry(1.6, 32), mat(0xd8b27e));
+    patch.rotation.x = -Math.PI / 2;
+    patch.position.set(patchPos.x, H(patchPos.x, patchPos.z) + 0.01, patchPos.z);
+    patch.receiveShadow = true;
+    root.add(patch);
+    avoid.push({ x: patchPos.x, z: patchPos.z, r: 1.6 });
+  }
 
   // grass tufts
   const tufts = scatter(data, GRASS_COUNT, 0.1, 11, avoid);
@@ -304,10 +318,11 @@ export function buildMeadow(scene: THREE.Scene, data: LevelData): Meadow {
   const s = new THREE.Vector3();
   tufts.forEach((t, i) => {
     const k = 0.8 + r() * 0.9;
-    m.compose(p.set(t.x, 0, t.z), q.setFromEuler(e.set(0, r() * Math.PI * 2, 0)), s.set(k, k, k));
+    m.compose(p.set(t.x, H(t.x, t.z), t.z), q.setFromEuler(e.set(0, r() * Math.PI * 2, 0)), s.set(k, k, k));
     grass.setMatrixAt(i, m);
   });
   grass.receiveShadow = true;
+  grass.name = 'grass';
   root.add(grass);
 
   // flowers
@@ -316,10 +331,10 @@ export function buildMeadow(scene: THREE.Scene, data: LevelData): Meadow {
   const stems = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.008, 0.008, 0.16, 4), mat(0x4f9a3a), spots.length);
   const flowerCols = [0xffffff, 0xffe066, 0xff9ecb, 0xc7a6ff, 0xffb366].map((c) => new THREE.Color(c));
   spots.forEach((f, i) => {
-    m.compose(p.set(f.x, 0.17, f.z), q.identity(), s.set(1, 0.6, 1));
+    m.compose(p.set(f.x, H(f.x, f.z) + 0.17, f.z), q.identity(), s.set(1, 0.6, 1));
     petals.setMatrixAt(i, m);
     petals.setColorAt(i, flowerCols[Math.floor(r() * flowerCols.length)]);
-    m.compose(p.set(f.x, 0.08, f.z), q.identity(), s.set(1, 1, 1));
+    m.compose(p.set(f.x, H(f.x, f.z) + 0.08, f.z), q.identity(), s.set(1, 1, 1));
     stems.setMatrixAt(i, m);
   });
   root.add(petals, stems);
@@ -330,10 +345,12 @@ export function buildMeadow(scene: THREE.Scene, data: LevelData): Meadow {
     if (prop.type === 'bush') o = makeBush(prop.collider, r);
     else if (prop.type === 'rock') o = makeRock(prop.collider, r);
     else if (prop.type === 'tree') o = makeTree(prop.collider);
+    else if (prop.type !== 'house') continue; // garden props are built by the level itself
     else {
       o = makeHouse(prop.collider);
       o.rotation.y = houseYaw;
     }
+    o.position.y = H(prop.collider.x, prop.collider.z);
     root.add(o);
     occluders.push(o);
   }

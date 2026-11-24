@@ -6,7 +6,8 @@ import { stepBody, type Body, type PhysicsWorld } from '../physics/physics';
 import { Hamster } from '../characters/hamster';
 import { Hedgehog } from '../characters/hedgehog';
 import { PartKit } from '../characters/parts';
-import { buildMeadow, type Meadow } from '../world/meadow';
+import { buildWorld, type World } from '../world/world';
+import { Terrain } from '../world/terrain';
 import { makeTreat } from '../world/treats';
 import { Confetti, HintSparkle } from '../world/effects';
 import { Critters } from '../world/critters';
@@ -42,7 +43,7 @@ interface Treat {
 export class Level1Meadow implements Level {
   private scene!: THREE.Scene;
   private events!: LevelEvents;
-  private meadow!: Meadow;
+  private meadow!: World;
   private hamster!: Hamster;
   private kit!: PartKit;
   private body!: Body;
@@ -118,7 +119,14 @@ export class Level1Meadow implements Level {
     this.scene = scene;
     this.events = events;
     const d = this.data;
-    this.meadow = buildMeadow(scene, d);
+    this.meadow = buildWorld(scene, {
+      halfSize: d.halfSize,
+      terrain: Terrain.flat(),
+      colliders: d.colliders,
+      props: d.props,
+      avoid: d.items.map((i) => ({ x: i.x, z: i.z, r: 0.5 })),
+      house: { x: d.house.x, z: d.house.z, facing: d.spawn },
+    });
     this.world = {
       colliders: [...d.colliders, { kind: 'cylinder', x: d.hedgehog.x, z: d.hedgehog.z, radius: HEDGEHOG_RADIUS, height: 1 }],
       bounds: { halfSize: d.halfSize },
