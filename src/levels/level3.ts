@@ -29,6 +29,12 @@ import { LevelBase, type LevelLayout, type Treat } from './levelBase';
 const CHEER_COOLDOWN = 8;
 const LAUGH_COOLDOWN = 4;
 const RESPAWN_AFTER = 0.8;
+/** The fade starts this long before the hamster is moved, so the jump cut happens in the dark. */
+const FADE_LEAD = 0.15;
+/** After being put back, the hamster stands still a moment (a held joystick must not walk it straight back in). */
+const RESPAWN_GRACE = 0.5;
+/** Bank respawn spots keep this distance from the water. */
+const BANK_MARGIN = 0.7;
 const HINT_AFTER = 3;
 const BIAS = 0.55;
 const LILY_WARN = 4;
@@ -70,6 +76,8 @@ export class Level3Brook extends LevelBase {
   private prev = { x: 0, z: 0 };
   private safe = { x: 0, y: 0, z: 0, heading: 0 };
   private fallT = -1;
+  private faded = false;
+  private graceT = 0;
   private fallsAt: number[] = [];
   private hinted = new Set<number>();
   private laughCooldown = 0;
@@ -228,6 +236,8 @@ export class Level3Brook extends LevelBase {
     this.safe = { x: p.x, y: p.y, z: p.z, heading: this.hamster.root.rotation.y };
     this.t = 0;
     this.fallT = -1;
+    this.faded = false;
+    this.graceT = 0;
     this.falls = 0;
     this.fallsAt = this.crossings.map(() => 0);
     this.hinted.clear();
@@ -258,8 +268,14 @@ export class Level3Brook extends LevelBase {
   update(dt: number, input: { move: { x: number; y: number }; action: boolean }, cameraYaw: number): void {
     this.t += dt;
     this.movePlatforms(dt);
-    // no steering while sinking into the water
-    super.update(dt, this.fallT >= 0 ? { move: { x: 0, y: 0 }, action: false } : input, cameraYaw);
+    this.graceT = Math.max(0, this.graceT - dt);
+    const frozen = this.fallT >= 0 || this.graceT > 0;
+    if (this.fallT >= 0 && this.body) {
+      // no drifting back onto the bank while sinking
+      this.body.vel.x = 0;
+      this.body.vel.z = 0;
+    }
+    super.update(dt, frozen ? { move: { x: 0, y: 0 }, action: false } : input, cameraYaw);
   }
 
   protected onUpdate(dt: number): void {
@@ -375,7 +391,12 @@ export class Level3Brook extends LevelBase {
     if (sup && this.staticSteps.has(sup)) {
       this.safe = { x: sup.x, y: b.pos.y, z: sup.z, heading };
     } else if (!sup && !inBrook(b.pos.x, b.pos.z) && b.pos.y > -0.05) {
-      this.safe = { x: b.pos.x, y: b.pos.y, z: b.pos.z, heading };
+      // keep bank spots away from the water's edge (on the hamster's side)
+      const cx = brookCenterX(b.pos.z);
+      const minOff = brookHalfWidth(b.pos.z) + BANK_MARGIN;
+      const off = b.pos.x - cx;
+      const x = Math.abs(off) < minOff ? cx + Math.sign(off || 1) * minOff : b.pos.x;
+      this.safe = { x, y: b.pos.y, z: b.pos.z, heading };
     }
     // which step of the current crossing was reached (for the glow)
     if (sup) {
@@ -405,9 +426,14 @@ export class Level3Brook extends LevelBase {
 
   private updateFall(dt: number): void {
     this.fallT += dt;
+    if (!this.faded && this.fallT >= RESPAWN_AFTER - FADE_LEAD) {
+      this.faded = true;
+      this.events.onRespawn?.();
+    }
     if (this.fallT < RESPAWN_AFTER) return;
     this.fallT = -1;
-    this.events.onRespawn?.();
+    this.faded = false;
+    this.graceT = RESPAWN_GRACE;
     const b = this.body;
     b.pos.x = this.safe.x;
     b.pos.y = this.safe.y;

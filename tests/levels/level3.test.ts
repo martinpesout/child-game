@@ -250,3 +250,67 @@ it('kamera se na přechodu natočí z boku, mimo přechod ne', () => {
   expect(Math.abs(l.cameraBias)).toBeGreaterThan(0.3);
   l.dispose();
 });
+
+it('po pádu z břehu se křeček nevrátí na samý okraj (držený joystick nespadne hned znovu)', async () => {
+  const { brookCenterX, brookHalfWidth, LEVEL3 } = await import('../../src/levels/level3Data');
+  const { l } = setup();
+  const z = LEVEL3.legs[0];
+  const edge = brookCenterX(z) + brookHalfWidth(z); // east bank edge, leg 1 goes west
+  put(l, edge + 2, z);
+  tick(l, 0.1);
+  const west = { move: { x: 0, y: 1 }, action: false };
+  // hold "forward" (west with camera yaw π/2) the whole time
+  const b = inner(l).body;
+  let backAt: number | null = null;
+  // walk 2 m, sink 0.8 s, then the hamster must stand far enough from the edge
+  for (let t = 0; t < 2.3; t += 1 / 60) {
+    const was = l.falls;
+    l.update(1 / 60, west, Math.PI / 2);
+    if (was === 1 && backAt === null && b.grounded && b.pos.y > -0.01) backAt = b.pos.x;
+  }
+  expect(l.falls).toBe(1);
+  expect(backAt).not.toBeNull();
+  expect(backAt! - edge).toBeGreaterThan(0.5);
+  l.dispose();
+});
+
+it('zatmění začne dřív, než se křeček přesune', () => {
+  const { l, e } = setup();
+  standOn(l, 0, 0);
+  const b = inner(l).body;
+  b.pos.x += 0.8;
+  b.pos.y = FALL_Y - 0.3;
+  b.grounded = false;
+  let respawnedInWater = false;
+  for (let t = 0; t < 1.2; t += 1 / 60) {
+    const before = e.respawns;
+    l.update(1 / 60, idle, 0);
+    if (e.respawns > before && b.pos.y < FALL_Y) respawnedInWater = true;
+  }
+  expect(e.respawns).toBe(1);
+  expect(respawnedInWater).toBe(true);
+  l.dispose();
+});
+
+it('setrvačností se z vody na břeh vylézt nedá', async () => {
+  const { brookCenterX, brookHalfWidth, LEVEL3 } = await import('../../src/levels/level3Data');
+  const { l } = setup();
+  const z = LEVEL3.legs[0];
+  const edge = brookCenterX(z) + brookHalfWidth(z);
+  const b = inner(l).body;
+  b.pos.x = edge - 0.15;
+  b.pos.z = z;
+  b.pos.y = FALL_Y - 0.05;
+  b.vel.x = 3;
+  b.vel.y = 0;
+  b.vel.z = 0;
+  b.grounded = false;
+  let maxY = -Infinity;
+  for (let t = 0; t < 0.7; t += 1 / 60) {
+    l.update(1 / 60, idle, 0);
+    maxY = Math.max(maxY, b.pos.y);
+  }
+  expect(l.falls).toBe(1);
+  expect(maxY).toBeLessThan(FALL_Y);
+  l.dispose();
+});
