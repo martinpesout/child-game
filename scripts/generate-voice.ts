@@ -7,6 +7,7 @@
  *   npm run voice -- --only intro,thanks  # jen vybrané věty
  *   npm run voice -- --force              # povolí i základní (strojový) hlas
  *   npm run voice -- --provider elevenlabs # hlasy ElevenLabs (klíč a hlasy v .env.local)
+ *   npm run voice -- --provider elevenlabs --only butterfly1 --force --stability 0.6 --style 0.2   # klidnější, čistší věta
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -80,7 +81,8 @@ try {
     } else {
       const speaker = speakerFor(id);
       const voiceId = voiceIdFor(speaker, env);
-      const { url, init } = elevenLabsRequest(voiceId!, LINES[id], env.ELEVENLABS_API_KEY!);
+      const settings = { stability: arg('stability') ? Number(arg('stability')) : undefined, style: arg('style') ? Number(arg('style')) : undefined };
+      const { url, init } = elevenLabsRequest(voiceId!, LINES[id], env.ELEVENLABS_API_KEY!, settings);
       const res = await fetch(url, init);
       if (!res.ok) {
         console.error(`ElevenLabs vrátil chybu ${res.status} u věty ${id}: ${(await res.text()).slice(0, 300)}`);

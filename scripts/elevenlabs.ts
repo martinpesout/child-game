@@ -43,7 +43,13 @@ export function voiceIdFor(speaker: Speaker, env: Record<string, string | undefi
 export const ELEVEN_MODEL = 'eleven_multilingual_v2';
 
 /** Text-to-speech request; the API key travels in a header, never in the URL. */
-export function elevenLabsRequest(voiceId: string, text: string, apiKey: string): { url: string; init: RequestInit } {
+/** Lower style / higher stability = calmer, cleaner delivery (less hiss and shouting). */
+export function elevenLabsRequest(
+  voiceId: string,
+  text: string,
+  apiKey: string,
+  settings: { stability?: number; style?: number } = {},
+): { url: string; init: RequestInit } {
   return {
     url: `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}?output_format=mp3_44100_128`,
     init: {
@@ -52,7 +58,7 @@ export function elevenLabsRequest(voiceId: string, text: string, apiKey: string)
       body: JSON.stringify({
         text,
         model_id: ELEVEN_MODEL,
-        voice_settings: { stability: 0.4, similarity_boost: 0.75, style: 0.45, use_speaker_boost: true },
+        voice_settings: { stability: settings.stability ?? 0.4, similarity_boost: 0.75, style: settings.style ?? 0.45, use_speaker_boost: true },
       }),
     },
   };

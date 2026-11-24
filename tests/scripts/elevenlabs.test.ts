@@ -58,3 +58,10 @@ it('kolo 4: krtek, žížala a brouček; bez vlastního hlasu krtek mluví jako 
   expect(voiceIdFor('beetle', env)).toBe('e');
   expect(voiceIdFor('mole', { ...env, ELEVENLABS_VOICE_MOLE: 'm' })).toBe('m');
 });
+
+it('nastavení hlasu jde upravit (stabilita, styl) – pro klidnější a čistší věty', () => {
+  const def = JSON.parse(elevenLabsRequest('v', 'Ahoj', 'k').init.body as string);
+  expect(def.voice_settings).toMatchObject({ stability: 0.4, style: 0.45 });
+  const calm = JSON.parse(elevenLabsRequest('v', 'Ahoj', 'k', { stability: 0.6, style: 0.2 }).init.body as string);
+  expect(calm.voice_settings).toMatchObject({ stability: 0.6, style: 0.2, similarity_boost: 0.75 });
+});
