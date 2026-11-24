@@ -61,3 +61,26 @@ it('záběr z daného místa: kamera dojede na pozici a dívá se na cíl', () =
   cam.getWorldDirection(fwd);
   expect(fwd.x).toBeLessThan(-0.9);
 });
+
+it('boční náklon otočí kameru jen v režimu za křečkem a nemění yaw pro joystick', () => {
+  const angle = (chase: boolean, bias: number) => {
+    const cam = new THREE.PerspectiveCamera();
+    const f = new FollowCamera(cam);
+    f.setChase(chase);
+    f.setHeading(0);
+    const target = new THREE.Vector3(0, 0, 0);
+    f.snap(target);
+    f.setSideBias(bias);
+    for (let i = 0; i < 300; i++) f.update(target, 1 / 60);
+    return { a: Math.atan2(cam.position.x, cam.position.z), yaw: f.yaw };
+  };
+  const chase0 = angle(true, 0);
+  const chase1 = angle(true, 0.6);
+  const d = Math.atan2(Math.sin(chase1.a - chase0.a), Math.cos(chase1.a - chase0.a));
+  expect(Math.abs(d)).toBeCloseTo(0.6, 1);
+  expect(chase1.yaw).toBeCloseTo(chase0.yaw, 5);
+  const fixed0 = angle(false, 0);
+  const fixed1 = angle(false, 0.6);
+  expect(fixed1.a).toBeCloseTo(fixed0.a, 5);
+  expect(fixed1.yaw).toBe(fixed0.yaw);
+});

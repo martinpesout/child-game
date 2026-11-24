@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import type { InputState } from '../input/types';
 import { cameraRelative } from '../input/combine';
 import { steer } from '../input/steer';
-import { groundAt, stepBody, type Body, type PhysicsWorld } from '../physics/physics';
+import { groundAt, stepBody, topHeightAt, type Body, type PhysicsWorld } from '../physics/physics';
+import { BlobShadow } from '../world/shadow';
 import { Hamster } from '../characters/hamster';
 import { PartKit } from '../characters/parts';
 import type { World } from '../world/world';
@@ -58,6 +59,7 @@ export abstract class LevelBase implements Level {
   /** Seconds between finishing the goal and the end screen. */
   protected celebrationTime = 2.2;
   private confetti: Confetti | null = null;
+  private shadow: BlobShadow | null = null;
   private celebrateLeft = -1;
   private completedFired = false;
   private steerMode = false;
@@ -144,6 +146,8 @@ export abstract class LevelBase implements Level {
     this.headingVal = l.spawn.heading;
     this.hamster.sync(this.body, 0);
     scene.add(this.hamster.root);
+    this.shadow = new BlobShadow();
+    scene.add(this.shadow.mesh);
 
     this.critters = new Critters(scene, l.physics.bounds.halfSize);
     this.critterCooldown = 0;
@@ -184,6 +188,8 @@ export abstract class LevelBase implements Level {
     if (this.steerMode && !celebrating) this.hamster.face(this.headingVal);
     if (Math.floor(this.hamster.anim.gaitPhase / Math.PI) !== Math.floor(gaitBefore / Math.PI)) this.events.onStep?.();
     this.view.update(this.hamster.root.position);
+    const p = this.body.pos;
+    this.shadow?.place(p.x, p.z, topHeightAt(p.x, p.z, this.body.radius, this.physics), p.y);
 
     const collected = this.updateTreats(dt);
     this.onUpdate(dt, collected);
@@ -196,6 +202,8 @@ export abstract class LevelBase implements Level {
     this.onDispose();
     this.view.dispose();
     this.hamster.dispose();
+    this.shadow?.dispose();
+    this.shadow = null;
     this.critters.dispose();
     this.treats.forEach((t) => t.root.removeFromParent());
     this.treats = [];

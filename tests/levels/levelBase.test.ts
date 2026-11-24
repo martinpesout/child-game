@@ -58,3 +58,12 @@ it('onFinished přijde hned při splnění cíle (ještě před oslavou), práv�
   expect(onFinished).toHaveBeenCalledTimes(1);
   l.dispose();
 });
+
+it('stín pod křečkem je ve scéně a po dispose zmizí', () => {
+  const scene = new THREE.Scene();
+  const l = new EmptyLevel();
+  l.setup(scene, events());
+  expect(scene.getObjectByName('blobShadow')).toBeTruthy();
+  l.dispose();
+  expect(scene.getObjectByName('blobShadow')).toBeUndefined();
+});

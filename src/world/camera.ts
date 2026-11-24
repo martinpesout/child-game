@@ -21,6 +21,8 @@ export class FollowCamera {
   private chase = false;
   private heading = 0;
   private chaseYaw = 0;
+  private biasWant = 0;
+  private bias = 0;
   private readonly focus = new THREE.Vector3();
   private readonly look = new THREE.Vector3();
   private initialised = false;
@@ -46,6 +48,11 @@ export class FollowCamera {
   setChase(on: boolean): void {
     this.chase = on;
     this.chaseYaw = this.heading + Math.PI;
+  }
+
+  /** Swing the chase camera to the side by `rad` (e.g. on a jump crossing). Ignored in the fixed mode. */
+  setSideBias(rad: number): void {
+    this.biasWant = rad;
   }
 
   /** Hamster heading (rotation.y) the chase camera should sit behind. */
@@ -82,7 +89,8 @@ export class FollowCamera {
       d = Math.atan2(Math.sin(d), Math.cos(d));
       this.chaseYaw += d * (1 - Math.exp(-CHASE_TURN_RATE * dt));
       this.chaseYaw = Math.atan2(Math.sin(this.chaseYaw), Math.cos(this.chaseYaw));
-    }
+      this.bias += (this.biasWant - this.bias) * (1 - Math.exp(-CHASE_TURN_RATE * dt));
+    } else this.bias = 0;
     const want = this.mode === 'follow' ? 0 : 1;
     this.blend += (want - this.blend) * (1 - Math.exp(-BLEND_RATE * dt));
     if (Math.abs(this.blend - want) < 0.001) this.blend = want;
@@ -107,7 +115,7 @@ export class FollowCamera {
 
   private place(): void {
     const f = this.focus;
-    const yaw = this.yaw;
+    const yaw = this.yaw + (this.chase ? this.bias : 0);
     // behind the camera's forward (-sin, -cos) means +(sin, cos)
     this.a.set(f.x + Math.sin(yaw) * DISTANCE, f.y * 0.6 + HEIGHT, f.z + Math.cos(yaw) * DISTANCE);
     this.la.set(f.x, f.y * 0.6 + LOOK_HEIGHT, f.z);
