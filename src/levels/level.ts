@@ -17,8 +17,12 @@ export interface LevelEvents {
   onStep?(): void;
   /** The hamster came close to a bee or butterfly (decorative chatter). */
   onCritter?(kind: 'bee' | 'butterfly', obj: THREE.Object3D): void;
-  /** The squirrel (level 2) says a line. */
-  onSquirrel?(id: LineId, obj: THREE.Object3D): void;
+  /** The level's friend (squirrel, frog) says a line. */
+  onFriendSay?(id: LineId, obj: THREE.Object3D): void;
+  /** The hamster is put back after falling into water (short fade). */
+  onRespawn?(): void;
+  /** A lily pad started to sink. */
+  onSink?(): void;
   /** The hamster bumped into a puddle. */
   onSplash?(): void;
 }

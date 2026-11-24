@@ -12,7 +12,7 @@ const events = () => {
     onComplete: (s: number) => e.completed.push(s),
     onNearNpc: vi.fn(),
     onGoal: (i: number) => e.goals.push(i),
-    onSquirrel: (id: string) => e.lines.push(id),
+    onFriendSay: (id: string) => e.lines.push(id),
     onSplash: () => e.splashes++,
   };
   return e;

@@ -124,7 +124,7 @@ function startLevel(id = levelId) {
         if (left >= 1 && left <= 9) say(`remaining${left}` as LineId);
       }
     },
-    onSquirrel(id, obj) {
+    onFriendSay(id, obj) {
       if (phase === 'play' || phase === 'celebrate') say(id, obj, 1.0);
     },
     onSplash: () => sfx.splash(),

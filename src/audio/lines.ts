@@ -36,5 +36,15 @@ export const LINES = {
   l2tube: 'Šup do roury!',
   l2wait: 'Haló! Tudy, pojď za mnou!',
   l2finish: 'Hurá, jsi v cíli! Jsi rychlejší než já!',
+  l3story: 'Cestu přehradil potůček. Na druhém břehu roste jahoda!',
+  l3intro: 'Kvák! Skákej po kamenech za mnou!',
+  l3laugh1: 'Kvák-kvák, to studí!',
+  l3laugh2: 'Žbluňk! Nevadí, zkus to znovu!',
+  l3laugh3: 'Hihi, kvák! Ještě jednou!',
+  l3cheer1: 'Hop! Výborný skok!',
+  l3cheer2: 'Kvák! Jsi skokan!',
+  l3hint: 'Rozběhni se a skoč dřív!',
+  l3lily: 'Pozor, lekníny se potápí! Skákej rychle!',
+  l3finish: 'Kvák! Jsi skokan jako já! Tady je tvoje jahoda.',
 } as const;
 export type LineId = keyof typeof LINES;

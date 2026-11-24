@@ -93,6 +93,12 @@ export abstract class LevelBase implements Level {
   /** Movement is frozen while celebrating; levels may still move the hamster themselves. */
   protected onDispose(): void {}
 
+  /** Turn the hamster (and the steering heading) to `h`, e.g. after being put back on a stone. */
+  protected resetHeading(h: number): void {
+    this.hamster.face(h);
+    this.headingVal = h;
+  }
+
   get player(): THREE.Object3D {
     return this.hamster.root;
   }

@@ -263,7 +263,7 @@ export class Level2Garden extends LevelBase {
   private say(id: LineId, force = false): void {
     if (!force && this.cheerCooldown > 0) return;
     this.cheerCooldown = CHEER_COOLDOWN;
-    this.events.onSquirrel?.(id, this.squirrel.root);
+    this.events.onFriendSay?.(id, this.squirrel.root);
   }
 
   private headingAt(s: number): number {

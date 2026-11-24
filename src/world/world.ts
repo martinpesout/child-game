@@ -237,7 +237,7 @@ function makeHills(): THREE.Group {
 }
 
 function scatter(
-  data: { halfSize: number; colliders: Collider[] },
+  data: { halfSize: number; colliders: Collider[]; exclude?: (x: number, z: number) => boolean },
   count: number,
   pad: number,
   seed: number,
@@ -252,6 +252,7 @@ function scatter(
     const z = (r() * 2 - 1) * lim;
     if (data.colliders.some((c) => insideCollider(x, z, c, pad))) continue;
     if (extraAvoid.some((a) => Math.hypot(x - a.x, z - a.z) < a.r)) continue;
+    if (data.exclude?.(x, z)) continue;
     out.push({ x, z });
   }
   return out;
@@ -264,6 +265,8 @@ export interface WorldSpec {
   props: Prop[];
   /** Spots kept free of grass and flowers (treats, paths). */
   avoid: { x: number; z: number; r: number }[];
+  /** Areas kept free of grass and flowers (e.g. the brook). */
+  exclude?: (x: number, z: number) => boolean;
   /** Hamster house with its door turned towards `facing` and a dirt patch in front. */
   house?: { x: number; z: number; facing: { x: number; z: number } };
 }
