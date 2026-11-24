@@ -65,3 +65,12 @@ it('obruč: průchod těsně vedle (0.75 m od středu) se nepočítá', () => {
   expect(t.update({ x: 0.75, z: -4.5 }, { x: 0.75, z: -5.5 })).toBeNull();
   expect(t.update({ x: 0.4, z: -4.5 }, { x: 0.4, z: -5.5 })).toBe(0);
 });
+
+it("brána 'line' (břeh za přechodem) se počítá do 2 m od středu", () => {
+  const g = placeGates(straight(), [{ s: 5, kind: 'line' }]);
+  expect(g[0].radius).toBe(2);
+  const t = new GateTracker(g);
+  expect(t.update({ x: 1.8, z: -4.5 }, { x: 1.8, z: -5.5 })).toBe(0);
+  const t2 = new GateTracker(g);
+  expect(t2.update({ x: 2.3, z: -4.5 }, { x: 2.3, z: -5.5 })).toBeNull();
+});

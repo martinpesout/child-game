@@ -76,13 +76,15 @@ export interface Gate {
   dirZ: number;
   /** Max distance from the centre that still counts as "through". */
   radius: number;
-  kind: 'hoop' | 'tube';
+  kind: GateKind;
 }
 
-/** How far from a gate's centre a pass still counts (the hoop opening at hamster height is ~±0.6 m). */
-export const GATE_RADIUS = { hoop: 0.6, tube: 0.7 };
+export type GateKind = 'hoop' | 'tube' | 'line';
 
-export function placeGates(course: Course, specs: { s: number; kind: 'hoop' | 'tube' }[]): Gate[] {
+/** How far from a gate's centre a pass still counts (the hoop opening at hamster height is ~±0.6 m). */
+export const GATE_RADIUS: Record<GateKind, number> = { hoop: 0.6, tube: 0.7, line: 2.0 };
+
+export function placeGates(course: Course, specs: { s: number; kind: GateKind }[]): Gate[] {
   return specs.map(({ s, kind }) => {
     const p = course.pointAt(s);
     const t = course.tangentAt(s);
