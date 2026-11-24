@@ -245,3 +245,26 @@ it('hrabání: šoupnutí tlapky, žuchnutí hlíny a padající drobky; ztlumen
   s.crumble();
   expect(FakeCtx.sources - before).toBeGreaterThanOrEqual(8);
 });
+
+it('hrabání použije nahraný zvuk, jakmile se načte (pokaždé trochu jinak vysoko)', async () => {
+  const decoded = { duration: 1 };
+  vi.stubGlobal('fetch', async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) }));
+  const s = new Sfx(undefined, { dig: 'sfx/dig.mp3' });
+  s.unlock();
+  const ctx = (s as unknown as { ctx: FakeCtx & { decodeAudioData?: unknown } }).ctx;
+  ctx.state = 'running';
+  (ctx as unknown as { decodeAudioData: () => Promise<object> }).decodeAudioData = async () => decoded;
+  await s.loadClips();
+  const played: { buffer: unknown; rate: number }[] = [];
+  vi.spyOn(ctx, 'createBufferSource').mockImplementation(() => {
+    const src = Object.assign(new FakeNode(), { buffer: null as unknown, playbackRate: { value: 1 }, start() {}, stop() {} });
+    queueMicrotask(() => played.push({ buffer: src.buffer, rate: src.playbackRate.value }));
+    return src as never;
+  });
+  s.dig();
+  s.crumble();
+  await Promise.resolve();
+  const clip = played.filter((p) => p.buffer === decoded);
+  expect(clip.length).toBe(2);
+  expect(clip[1].rate).toBeLessThan(1); // crumble plays it deeper
+});

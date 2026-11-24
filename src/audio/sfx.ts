@@ -103,6 +103,7 @@ export class Sfx {
         this.master.connect(this.ctx.destination);
       }
       if (this.ctx.state !== 'running') void this.ctx.resume();
+      void this.loadClips();
     } catch {
       /* audio unavailable – the game works silently */
     }
@@ -179,24 +180,42 @@ export class Sfx {
     this.tone(500, 0.25, 'sine', 0.05, 0.22, 360);
   }
 
-  /** One paw scrape in the soil: two scratchy "shhk" strokes, a soft thud of earth and crumbs pattering down. */
+  /** One paw scrape: earth pours off the paws – a short granular trickle over a soft sliding hiss, with a light thud. */
   dig(): void {
     if (!this.ctx) return;
+    // recorded claw rakes, each a little higher or lower so quick digging doesn't repeat
+    if (this.digBuf) return this.playBuf(this.digBuf, 0.92 + Math.random() * 0.16, 1);
     const t = this.ctx.currentTime;
-    this.scrape(t, 2400, 800, 0.14, 0.55);
-    this.scrape(t + 0.13, 2000, 700, 0.12, 0.45);
-    this.toneAt(t + 0.03, 120, 0.12, 'sine', 0.38, 70);
-    for (let i = 0; i < 4; i++) this.noiseHit(t + 0.2 + i * 0.06 + Math.random() * 0.03, 2600 + Math.random() * 1500, 0.03, 0.14);
+    this.pour(t, 0.5, 0.5, 28);
+    this.toneAt(t + 0.02, 110, 0.1, 'sine', 0.25, 70);
   }
 
-  /** A mound or a block of soil breaks open: a bigger rush of earth, a deep thump and lots of falling crumbs. */
+  /** A mound or a block of soil breaks open: a longer, heavier pour of earth with a deep thump. */
   crumble(): void {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
-    this.scrape(t, 1600, 260, 0.38, 0.65);
-    this.scrape(t + 0.05, 3000, 900, 0.2, 0.3);
-    this.toneAt(t, 85, 0.28, 'sine', 0.5, 50);
-    for (let i = 0; i < 8; i++) this.noiseHit(t + 0.12 + i * 0.06 + Math.random() * 0.04, 1800 + Math.random() * 2400, 0.035, 0.15);
+    if (this.digBuf) {
+      // the same rakes, slower and deeper, with a thump of falling earth
+      this.playBuf(this.digBuf, 0.78, 1);
+      this.toneAt(t, 80, 0.3, 'sine', 0.45, 48);
+      return;
+    }
+    this.pour(t, 0.85, 0.7, 55);
+    this.toneAt(t, 80, 0.3, 'sine', 0.45, 48);
+  }
+
+  /**
+   * Pouring soil: a band of sliding hiss (fades in and out) plus many tiny grain clicks scattered over `dur`,
+   * densest in the first half – like earth trickling off a shovel.
+   */
+  private pour(t0: number, dur: number, vol: number, grains: number): void {
+    this.scrape(t0, 900, 420, dur, vol * 0.55, 'lowpass', dur * 0.35);
+    for (let i = 0; i < grains; i++) {
+      const k = Math.random() ** 1.6; // more grains early on
+      const tt = t0 + k * dur * 0.9;
+      const fade = 1 - k * 0.7;
+      this.noiseHit(tt, 900 + Math.random() * 2600, 0.012 + Math.random() * 0.02, vol * 0.28 * fade * (0.5 + Math.random() * 0.5));
+    }
   }
 
   /** Paw against a stone: a dull knock. */
@@ -265,7 +284,47 @@ export class Sfx {
     this.tone(880, 0.06, 'sine', 0.15, 0, 660);
   }
 
-  constructor(private readonly musicUrl?: string) {}
+  constructor(
+    private readonly musicUrl?: string,
+    /** Recorded sound effects (e.g. the dig sound); the generated ones are used until they load. */
+    private readonly sfxUrls: { dig?: string } = {},
+  ) {}
+
+  private digBuf: AudioBuffer | null = null;
+  private clipsLoading: Promise<void> | null = null;
+
+  /** Loads the recorded sound effects (after the audio is unlocked; a failed load is retried next time). */
+  async loadClips(): Promise<void> {
+    if (this.clipsLoading) await this.clipsLoading;
+    const ctx = this.ctx;
+    const url = this.sfxUrls.dig;
+    if (!ctx || this.digBuf || !url) return;
+    this.clipsLoading = (async () => {
+      try {
+        const res = await fetch(url);
+        if (res.ok) this.digBuf = await ctx.decodeAudioData(await res.arrayBuffer());
+      } catch {
+        /* keep the generated sound */
+      }
+    })();
+    await this.clipsLoading;
+    this.clipsLoading = null;
+  }
+
+  /** Plays a decoded buffer once at a playback rate (pitch) and volume. */
+  private playBuf(buf: AudioBuffer, rate: number, vol: number): void {
+    const ctx = this.ctx;
+    if (!ctx || !this.master || this._muted || ctx.state !== 'running') return;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.playbackRate.value = rate;
+    const g = ctx.createGain();
+    g.gain.value = vol;
+    src.connect(g);
+    g.connect(this.master);
+    src.start();
+    src.onended = () => g.disconnect();
+  }
 
   private musicSrc: AudioBufferSourceNode | null = null;
   private trackGain: GainNode | null = null;
@@ -431,7 +490,7 @@ export class Sfx {
 
   /** Short filtered noise burst (crunch, shaker). */
   /** Band-passed noise sweeping from f0 to f1 – a scratch of paws in the soil. */
-  private scrape(t0: number, f0: number, f1: number, dur: number, vol: number): void {
+  private scrape(t0: number, f0: number, f1: number, dur: number, vol: number, type: BiquadFilterType = 'bandpass', attack = 0.012): void {
     const ctx = this.ctx;
     if (!ctx || !this.master || this._muted || ctx.state !== 'running') return;
     if (!this.scrapeNoise) {
@@ -444,13 +503,13 @@ export class Sfx {
     const src = ctx.createBufferSource();
     src.buffer = this.scrapeNoise;
     const f = ctx.createBiquadFilter();
-    f.type = 'bandpass';
+    f.type = type;
     f.frequency.setValueAtTime(f0, t0);
     f.frequency.exponentialRampToValueAtTime(f1, t0 + dur);
     f.Q.setValueAtTime(0.8, t0);
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, t0);
-    g.gain.linearRampToValueAtTime(vol, t0 + 0.012);
+    g.gain.linearRampToValueAtTime(vol, t0 + attack);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
     src.connect(f);
     f.connect(g);
