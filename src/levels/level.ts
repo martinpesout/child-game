@@ -1,6 +1,7 @@
 import type * as THREE from 'three';
 import type { InputState } from '../input/types';
 import type { ItemKind } from './level1Data';
+import type { LineId } from '../audio/lines';
 
 export interface LevelEvents {
   onCollect(kind: ItemKind, nutsCollected: number, nutsTotal: number): void;
@@ -13,6 +14,10 @@ export interface LevelEvents {
   onStep?(): void;
   /** The hamster came close to a bee or butterfly (decorative chatter). */
   onCritter?(kind: 'bee' | 'butterfly', obj: THREE.Object3D): void;
+  /** The squirrel (level 2) says a line. */
+  onSquirrel?(id: LineId, obj: THREE.Object3D): void;
+  /** The hamster bumped into a puddle. */
+  onSplash?(): void;
 }
 
 export interface Level {

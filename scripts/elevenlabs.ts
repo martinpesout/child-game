@@ -1,10 +1,11 @@
 import type { LineId } from '../src/audio/lines';
 
-export type Speaker = 'narrator' | 'hedgehog' | 'bee' | 'butterfly';
+export type Speaker = 'narrator' | 'hedgehog' | 'bee' | 'butterfly' | 'squirrel';
 
 /** Who says each line – each character can get its own ElevenLabs voice. */
 export function speakerFor(id: LineId): Speaker {
-  if (id === 'story') return 'narrator';
+  if (id === 'story' || id === 'l2story') return 'narrator';
+  if (id.startsWith('l2')) return 'squirrel';
   if (id.startsWith('bee')) return 'bee';
   if (id.startsWith('butterfly')) return 'butterfly';
   return 'hedgehog';

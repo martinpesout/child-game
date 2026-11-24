@@ -31,3 +31,9 @@ it('sestaví požadavek na vícejazyčný model s klíčem v hlavičce (ne v URL
   expect(body.text).toBe('Bzzz!');
   expect(body.model_id).toBe('eleven_multilingual_v2');
 });
+
+it('věty 2. kola: příběh vypráví vypravěč, ostatní veverka', () => {
+  expect(speakerFor('l2story')).toBe('narrator');
+  expect(speakerFor('l2intro')).toBe('squirrel');
+  expect(speakerFor('l2finish')).toBe('squirrel');
+});

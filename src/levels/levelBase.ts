@@ -15,7 +15,6 @@ import type { Level, LevelEvents } from './level';
 
 const PICKUP_RADIUS = 0.5;
 const PICKUP_HEIGHT = 0.5;
-const CELEBRATION_TIME = 2.2;
 const PICKUP_ANIM = 0.25;
 /** Treats are drawn bigger than life so kids spot them in the grass. */
 const TREAT_SCALE = 1.8;
@@ -56,6 +55,8 @@ export abstract class LevelBase implements Level {
   protected critters!: Critters;
   protected bonusTotal = 0;
   protected bonusTaken = 0;
+  /** Seconds between finishing the goal and the end screen. */
+  protected celebrationTime = 2.2;
   private confetti: Confetti | null = null;
   private celebrateLeft = -1;
   private completedFired = false;
@@ -229,7 +230,7 @@ export abstract class LevelBase implements Level {
 
   private updateCelebration(dt: number): void {
     if (this.isComplete() && this.celebrateLeft < 0 && !this.completedFired) {
-      this.celebrateLeft = CELEBRATION_TIME;
+      this.celebrateLeft = this.celebrationTime;
       this.onCelebrate();
       this.confetti = new Confetti(this.hamster.root.position);
       this.scene.add(this.confetti.mesh);

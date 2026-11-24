@@ -28,5 +28,13 @@ export const LINES = {
   butterfly1: 'Jé, ahoj! Máš krásné tvářičky!',
   butterfly2: 'Chyť mě, jestli to dokážeš!',
   butterfly3: 'Lítám a lítám, až se mi točí hlava!',
+  l2story: 'Za loukou je zahrada. Bydlí tam rychlá veverka!',
+  l2intro: 'Ahoj! Dáme závod? Proběhni všemi obručemi!',
+  l2cheer1: 'Jen tak dál!',
+  l2cheer2: 'Ty jsi ale rychlík!',
+  l2cheer3: 'Super, další obruč!',
+  l2tube: 'Šup do roury!',
+  l2wait: 'Haló! Tudy, pojď za mnou!',
+  l2finish: 'Hurá, jsi v cíli! Jsi rychlejší než já!',
 } as const;
 export type LineId = keyof typeof LINES;
