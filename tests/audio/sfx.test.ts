@@ -135,3 +135,15 @@ it('na iOS nastaví přehrávání médií, aby zvuk hrál i při ztlumeném tel
   play.mockRestore();
   delete (navigator as unknown as { audioSession?: unknown }).audioSession;
 });
+
+it('cáknutí do kaluže: ztlumeno nic, jinak zvuk', () => {
+  const s = new Sfx();
+  s.unlock();
+  s.setMuted(true);
+  s.splash();
+  const before = FakeCtx.oscillators;
+  expect(before).toBe(0);
+  s.setMuted(false);
+  s.splash();
+  expect(FakeCtx.oscillators).toBeGreaterThan(0);
+});

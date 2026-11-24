@@ -164,6 +164,15 @@ export class Sfx {
     for (let i = 0; i < 6; i++) this.crunch(0.25 + i * 0.17);
   }
 
+  /** Splash into a puddle + a little "brr". */
+  splash(): void {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    for (let i = 0; i < 3; i++) this.noiseHit(t + i * 0.05, 900 + i * 500, 0.12, 0.12);
+    this.tone(520, 0.25, 'triangle', 0.08, 0.2, 380);
+    this.tone(500, 0.25, 'sine', 0.05, 0.22, 360);
+  }
+
   /** Friendly bee buzz. */
   buzz(): void {
     for (let i = 0; i < 3; i++) this.tone(200 + i * 15, 0.22, 'triangle', 0.09, i * 0.16, 230 + i * 15);
