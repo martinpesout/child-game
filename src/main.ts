@@ -352,6 +352,14 @@ new GameLoop(
     fader.update(camera.position, level.player.position, dt);
     screens.updateControls(touch.joystickView, active && state.action);
     screens.setAction(level.actionMode);
+    // bubble over the hamster on the meadow when the button means dig / into the hole
+    const am = level.actionMode;
+    if (active && am !== 'jump' && !view3d()) {
+      v.copy(level.player.position);
+      v.y += 0.8;
+      v.project(camera);
+      screens.actionBadge(am, v.x * 0.5 + 0.5, -v.y * 0.5 + 0.5);
+    } else screens.actionBadge(null, 0, 0);
     const ir = (level as { iris?: { k: number; center: { x: number; y: number } | null } | null }).iris;
     if (ir) {
       let c = ir.center;

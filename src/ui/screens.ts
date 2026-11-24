@@ -37,6 +37,7 @@ export class Screens {
   private actionVal = 'jump';
   private readonly irisLayer: HTMLDivElement;
   private readonly exitArrowEl: HTMLDivElement;
+  private readonly badge: HTMLDivElement;
 
   constructor(root: HTMLElement, handlers: { onPause: () => void; onToggleMute: () => boolean }) {
     this.bubbleLayer = el('div', 'layer');
@@ -78,7 +79,8 @@ export class Screens {
     this.fader = el('div', 'fader');
     this.irisLayer = el('div', 'iris');
     this.exitArrowEl = el('div', 'exit-arrow', '<span>☀</span><b>➜</b>');
-    root.append(this.controls, this.hud, this.bubbleLayer, this.exitArrowEl, this.fader, this.irisLayer, this.panel, rotate);
+    this.badge = el('div', 'action-badge');
+    root.append(this.controls, this.hud, this.bubbleLayer, this.badge, this.exitArrowEl, this.fader, this.irisLayer, this.panel, rotate);
   }
 
   setMuted(m: boolean): void {
@@ -157,6 +159,8 @@ export class Screens {
     if (mode === this.actionVal) return;
     this.actionVal = mode;
     this.jumpBtn.dataset.action = mode;
+    // a new action: the button hops and keeps glowing while it means something else than a jump
+    this.jumpBtn.classList.toggle('attention', mode !== 'jump');
     this.jumpBtn.innerHTML = mode === 'dig' ? ICONS.paw : mode === 'enter' ? ICONS.enter : ICONS.jump;
   }
 
@@ -178,6 +182,18 @@ export class Screens {
     this.exitArrowEl.style.left = `${(a.x * 100).toFixed(1)}%`;
     this.exitArrowEl.style.top = `${(a.y * 100).toFixed(1)}%`;
     (this.exitArrowEl.querySelector('b') as HTMLElement).style.transform = `rotate(${(-a.angle).toFixed(3)}rad)`;
+  }
+
+  /** Small bubble over the hamster showing what the button does now (null hides it). x, y in 0..1 of the screen. */
+  actionBadge(mode: 'dig' | 'enter' | null, x: number, y: number): void {
+    this.badge.classList.toggle('on', !!mode);
+    if (!mode) return;
+    if (this.badge.dataset.mode !== mode) {
+      this.badge.dataset.mode = mode;
+      this.badge.innerHTML = mode === 'dig' ? ICONS.paw : ICONS.enter;
+    }
+    this.badge.style.left = `${(x * 100).toFixed(1)}%`;
+    this.badge.style.top = `${(y * 100).toFixed(1)}%`;
   }
 
   /** Short dip to dark (e.g. when the hamster is put back after a splash). */

@@ -4,6 +4,7 @@ import { PartKit } from '../characters/parts';
 import { Worm, Beetle } from '../characters/critters4';
 import { MazeGrid, toDir, type BigKind, type MazeDef } from '../levels/maze';
 import { makeTreat } from './treats';
+import { makeChest, makeDino } from './buried';
 import type { Body } from '../physics/physics';
 import type { ItemKind } from '../levels/level1Data';
 
@@ -480,75 +481,11 @@ export class Underground {
     g.position.set(cx, cy, z);
     s.add(g);
     if (big.kind === 'chest') {
-      const w = big.w * C * 0.85;
-      const h = big.h * C * 0.55;
-      const chest = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.3), mat(0x9b5f2f));
-      chest.position.y = -h * 0.25;
-      g.add(chest);
-      const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, w, 12, 1, false, 0, Math.PI), mat(0x8a5228));
-      lid.rotation.z = Math.PI / 2;
-      lid.rotation.x = -0.35; // slightly open
-      lid.position.set(0, h * 0.25, -0.02);
-      g.add(lid);
-      for (const sx of [-w / 2 + 0.06, w / 2 - 0.06]) {
-        const band = new THREE.Mesh(new THREE.BoxGeometry(0.05, h + 0.02, 0.32), mat(0xd9b44a, { metalness: 0.4 }));
-        band.position.set(sx, -h * 0.25, 0);
-        g.add(band);
-      }
-      const gold = mat(0xffd34d, { metalness: 0.5, roughness: 0.4 });
-      for (let i = 0; i < 6; i++) {
-        const coin = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.015, 12), gold);
-        coin.rotation.x = Math.PI / 2 - 0.4;
-        coin.position.set(-0.2 + i * 0.08, h * 0.25 + 0.04 + (i % 2) * 0.03, 0.08);
-        g.add(coin);
-      }
+      g.add(makeChest(big.w * C * 0.92, big.h * C * 0.9));
     } else if (big.kind === 'dino') {
-      const bone = mat(0xf3ead6);
-      const len = big.w * C * 0.9;
-      // spine of round vertebrae
-      for (let i = 0; i < 9; i++) {
-        const v = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), bone);
-        v.position.set(-len / 2 + 0.5 + i * ((len - 0.9) / 8), 0.12 + Math.sin(i / 2.6) * 0.06, 0);
-        g.add(v);
-      }
-      // ribs
-      for (let i = 0; i < 5; i++) {
-        const r = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.025, 6, 12, Math.PI), bone);
-        r.position.set(-0.4 + i * 0.22, 0.05, 0);
-        r.rotation.z = Math.PI;
-        g.add(r);
-      }
-      // tail
-      for (let i = 0; i < 5; i++) {
-        const v = new THREE.Mesh(new THREE.SphereGeometry(0.06 - i * 0.008, 8, 6), bone);
-        v.position.set(-len / 2 + 0.4 - i * 0.12, 0.1 - i * 0.06, 0);
-        g.add(v);
-      }
-      // smiling skull with a jaw that clacks
-      const skull = new THREE.Group();
-      skull.position.set(len / 2 - 0.25, 0.2, 0);
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 10), bone);
-      head.scale.set(1.4, 0.9, 0.8);
-      skull.add(head);
-      for (const sz of [-1, 1]) {
-        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), mat(0x3b2a1e));
-        eye.position.set(0.02, 0.06, sz * 0.1 + 0.05);
-        skull.add(eye);
-      }
-      const jaw = new THREE.Group();
-      jaw.position.set(-0.05, -0.08, 0);
-      const jawBone = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.06, 0.18), bone);
-      jawBone.position.x = 0.12;
-      jaw.add(jawBone);
-      skull.add(jaw);
-      g.add(skull);
-      this.skull = jaw;
-      // legs
-      for (const lx of [-0.5, 0.4]) {
-        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.35, 6), bone);
-        leg.position.set(lx, -0.18, 0);
-        g.add(leg);
-      }
+      const dino = makeDino(big.w * C * 0.95, big.h * C);
+      g.add(dino);
+      this.skull = dino.userData.jaw as THREE.Object3D;
     } else if (big.kind === 'boot') {
       const boot = new THREE.Group();
       const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.35, 10), mat(0x3f8f4f));

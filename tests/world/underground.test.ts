@@ -136,3 +136,19 @@ it('políčka hlíny jsou od sebe vidět (mezera a střídavý odstín)', () => 
   expect(colors.size).toBeGreaterThan(1);
   u.dispose();
 });
+
+it('truhla a kostra dinosaura jsou podrobné modely, které se vejdou do svých políček', async () => {
+  const { makeChest, makeDino } = await import('../../src/world/buried');
+  const meshes = (o: THREE.Object3D) => { let n = 0; o.traverse((c) => { if ((c as THREE.Mesh).isMesh) n++; }); return n; };
+  const chest = makeChest(1.1, 1.08);
+  const cb = new THREE.Box3().setFromObject(chest);
+  expect(meshes(chest)).toBeGreaterThan(20);
+  expect(cb.max.x - cb.min.x).toBeLessThan(1.25);
+  expect(cb.max.y - cb.min.y).toBeLessThan(1.2);
+  const dino = makeDino(2.85, 1.2);
+  const db = new THREE.Box3().setFromObject(dino);
+  expect(meshes(dino)).toBeGreaterThan(40);
+  expect(db.max.x - db.min.x).toBeLessThan(3.1);
+  expect(db.max.y - db.min.y).toBeLessThan(1.3);
+  expect(dino.userData.jaw).toBeTruthy();
+});

@@ -41,3 +41,18 @@ it('šipka k východu se ukáže jen s údaji', () => {
   s.exitArrow(null);
   expect(a.classList.contains('on')).toBe(false);
 });
+
+it('změna akce na hrabání tlačítko rozpulzuje a nad křečkem ukáže bublinku s tlapkou', () => {
+  const { root, s } = make();
+  const btn = root.querySelector('.jump-btn') as HTMLElement;
+  s.setAction('dig');
+  expect(btn.classList.contains('attention')).toBe(true);
+  s.actionBadge('dig', 0.5, 0.4);
+  const badge = root.querySelector('.action-badge') as HTMLElement;
+  expect(badge.classList.contains('on')).toBe(true);
+  expect(parseFloat(badge.style.left)).toBe(50);
+  s.setAction('jump');
+  expect(btn.classList.contains('attention')).toBe(false);
+  s.actionBadge(null, 0, 0);
+  expect(badge.classList.contains('on')).toBe(false);
+});
