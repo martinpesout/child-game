@@ -6,6 +6,8 @@ export interface LevelEvents {
   onCollect(kind: ItemKind, nutsCollected: number, nutsTotal: number): void;
   onComplete(stars: number): void;
   onNearNpc(): void;
+  /** A level goal item was reached (nut collected, gate passed): index 0-based. */
+  onGoal?(index: number, total: number): void;
   onJump?(): void;
   /** Each footfall while running (for the pitter-patter sound). */
   onStep?(): void;
