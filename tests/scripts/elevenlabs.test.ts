@@ -44,3 +44,17 @@ it('kolo 3: příběh čte vypravěč, ostatní žabka s vlastním hlasem', () =
   expect(speakerFor('l3laugh2')).toBe('frog');
   expect(voiceIdFor('frog', { ELEVENLABS_VOICE_FROG: 'f1', ELEVENLABS_VOICE: 'x' })).toBe('f1');
 });
+
+it('kolo 4: krtek, žížala a brouček; bez vlastního hlasu krtek mluví jako ježek, žížala jako motýl, brouček jako včelka', () => {
+  expect(speakerFor('l4story')).toBe('narrator');
+  expect(speakerFor('l4intro')).toBe('mole');
+  expect(speakerFor('l4worm')).toBe('worm');
+  expect(speakerFor('l4stone')).toBe('worm');
+  expect(speakerFor('l4beetle')).toBe('beetle');
+  expect(speakerFor('l4dino')).toBe('beetle');
+  const env = { ELEVENLABS_VOICE_HEDGEHOG: 'h', ELEVENLABS_VOICE_BUTTERFLY: 'b', ELEVENLABS_VOICE_BEE: 'e' };
+  expect(voiceIdFor('mole', env)).toBe('h');
+  expect(voiceIdFor('worm', env)).toBe('b');
+  expect(voiceIdFor('beetle', env)).toBe('e');
+  expect(voiceIdFor('mole', { ...env, ELEVENLABS_VOICE_MOLE: 'm' })).toBe('m');
+});

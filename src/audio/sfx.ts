@@ -179,6 +179,29 @@ export class Sfx {
     this.tone(500, 0.25, 'sine', 0.05, 0.22, 360);
   }
 
+  /** Scratchy paw dig in the soil. */
+  dig(): void {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    for (let i = 0; i < 3; i++) this.noiseHit(t + i * 0.045, 500 + i * 250, 0.07, 0.1);
+  }
+
+  /** Paw against a stone: a dull knock. */
+  thud(): void {
+    this.tone(150, 0.12, 'sine', 0.25, 0, 90);
+  }
+
+  /** Sleepy beetle snore. */
+  snore(): void {
+    this.tone(90, 0.5, 'sawtooth', 0.05, 0, 70);
+    this.tone(120, 0.35, 'sine', 0.06, 0.6, 160);
+  }
+
+  /** Pop out of a molehill. */
+  pop(): void {
+    this.tone(400, 0.09, 'sine', 0.2, 0, 900);
+  }
+
   /** Frog "ribbit": two quick croaks falling in pitch. */
   croak(): void {
     for (let i = 0; i < 2; i++) {

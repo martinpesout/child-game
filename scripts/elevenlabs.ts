@@ -1,10 +1,16 @@
 import type { LineId } from '../src/audio/lines';
 
-export type Speaker = 'narrator' | 'hedgehog' | 'bee' | 'butterfly' | 'squirrel' | 'frog';
+export type Speaker = 'narrator' | 'hedgehog' | 'bee' | 'butterfly' | 'squirrel' | 'frog' | 'mole' | 'worm' | 'beetle';
+
+/** A character without its own voice borrows another one. */
+const FALLBACK: Partial<Record<Speaker, Speaker>> = { mole: 'hedgehog', worm: 'butterfly', beetle: 'bee' };
 
 /** Who says each line – each character can get its own ElevenLabs voice. */
 export function speakerFor(id: LineId): Speaker {
-  if (id === 'story' || id === 'l2story' || id === 'l3story') return 'narrator';
+  if (id === 'story' || id === 'l2story' || id === 'l3story' || id === 'l4story') return 'narrator';
+  if (id === 'l4worm' || id === 'l4stone' || id === 'l4chest') return 'worm';
+  if (id === 'l4beetle' || id === 'l4dino') return 'beetle';
+  if (id.startsWith('l4')) return 'mole';
   if (id.startsWith('l2')) return 'squirrel';
   if (id.startsWith('l3')) return 'frog';
   if (id.startsWith('bee')) return 'bee';
@@ -30,7 +36,8 @@ export function parseEnv(text: string): Record<string, string> {
 
 /** ELEVENLABS_VOICE_<SPEAKER>, else ELEVENLABS_VOICE, else null. */
 export function voiceIdFor(speaker: Speaker, env: Record<string, string | undefined>): string | null {
-  return env[`ELEVENLABS_VOICE_${speaker.toUpperCase()}`] || env.ELEVENLABS_VOICE || null;
+  const fb = FALLBACK[speaker];
+  return env[`ELEVENLABS_VOICE_${speaker.toUpperCase()}`] || (fb && env[`ELEVENLABS_VOICE_${fb.toUpperCase()}`]) || env.ELEVENLABS_VOICE || null;
 }
 
 export const ELEVEN_MODEL = 'eleven_multilingual_v2';

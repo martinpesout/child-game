@@ -35,6 +35,8 @@ export class Screens {
   readonly bubbleLayer: HTMLDivElement;
   private readonly fader: HTMLDivElement;
   private actionVal = 'jump';
+  private readonly irisLayer: HTMLDivElement;
+  private readonly exitArrowEl: HTMLDivElement;
 
   constructor(root: HTMLElement, handlers: { onPause: () => void; onToggleMute: () => boolean }) {
     this.bubbleLayer = el('div', 'layer');
@@ -74,7 +76,9 @@ export class Screens {
     this.panel = el('div', 'panel');
     const rotate = el('div', 'rotate', '<div class="rotate-icon">📱</div><p>Otoč tablet</p>');
     this.fader = el('div', 'fader');
-    root.append(this.controls, this.hud, this.bubbleLayer, this.fader, this.panel, rotate);
+    this.irisLayer = el('div', 'iris');
+    this.exitArrowEl = el('div', 'exit-arrow', '<span>☀</span><b>➜</b>');
+    root.append(this.controls, this.hud, this.bubbleLayer, this.exitArrowEl, this.fader, this.irisLayer, this.panel, rotate);
   }
 
   setMuted(m: boolean): void {
@@ -154,6 +158,26 @@ export class Screens {
     this.actionVal = mode;
     this.jumpBtn.dataset.action = mode;
     this.jumpBtn.innerHTML = mode === 'dig' ? ICONS.paw : mode === 'enter' ? ICONS.enter : ICONS.jump;
+  }
+
+  /** Cartoon iris: k = 0 closed … 1 open around (x, y) in 0..1 screen units; null hides it. */
+  iris(k: number | null, x: number, y: number): void {
+    if (k === null || k >= 1) {
+      this.irisLayer.classList.remove('on');
+      return;
+    }
+    const r = Math.max(0, k) * 120; // in vmax %
+    this.irisLayer.classList.add('on');
+    this.irisLayer.style.background = `radial-gradient(circle at ${(x * 100).toFixed(1)}% ${(y * 100).toFixed(1)}%, transparent ${r.toFixed(1)}vmax, #120a05 ${(r + 0.6).toFixed(1)}vmax)`;
+  }
+
+  /** Arrow with a sun at the screen edge pointing to the maze exit (null hides it). */
+  exitArrow(a: { x: number; y: number; angle: number } | null): void {
+    this.exitArrowEl.classList.toggle('on', !!a);
+    if (!a) return;
+    this.exitArrowEl.style.left = `${(a.x * 100).toFixed(1)}%`;
+    this.exitArrowEl.style.top = `${(a.y * 100).toFixed(1)}%`;
+    (this.exitArrowEl.querySelector('b') as HTMLElement).style.transform = `rotate(${(-a.angle).toFixed(3)}rad)`;
   }
 
   /** Short dip to dark (e.g. when the hamster is put back after a splash). */

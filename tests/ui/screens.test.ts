@@ -22,3 +22,22 @@ it('setAction vymění ikonu akčního tlačítka', () => {
   expect(btn.innerHTML).toBe(first);
   expect(ICONS.paw).toContain('svg');
 });
+
+it('kolečko: iris(0.5, x, y) ukáže vrstvu s kruhem, iris(null) ji skryje', () => {
+  const { root, s } = make();
+  s.iris(0.5, 0.3, 0.4);
+  const layer = root.querySelector('.iris') as HTMLElement;
+  expect(layer.classList.contains('on')).toBe(true);
+  expect(layer.style.background).toContain('radial-gradient');
+  s.iris(null, 0, 0);
+  expect(layer.classList.contains('on')).toBe(false);
+});
+
+it('šipka k východu se ukáže jen s údaji', () => {
+  const { root, s } = make();
+  s.exitArrow({ x: 0.9, y: 0.1, angle: 0.5 });
+  const a = root.querySelector('.exit-arrow') as HTMLElement;
+  expect(a.classList.contains('on')).toBe(true);
+  s.exitArrow(null);
+  expect(a.classList.contains('on')).toBe(false);
+});

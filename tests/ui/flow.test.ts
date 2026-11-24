@@ -75,3 +75,13 @@ it('kolo 2 → Dál → příběh kola 3; po kole 3 „už brzy“', () => {
   f.next();
   expect(f.screen).toBe('comingSoon');
 });
+
+it('kolo 3 → Dál → příběh kola 4; po kole 4 „už brzy“', () => {
+  const f = flowWith([1, 2, 3, 4]);
+  f.start(); f.pick(3); f.continue(); f.complete(2);
+  f.next();
+  expect(f.current).toBe(4);
+  f.continue(); f.complete(3);
+  f.next();
+  expect(f.screen).toBe('comingSoon');
+});

@@ -33,10 +33,13 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
 const follow = new FollowCamera(camera);
 
+/** Set by the current level (level 4 sizes its underground view). */
+let resizeHook: ((aspect: number) => void) | null = null;
 function resize() {
   renderer.setSize(window.innerWidth, window.innerHeight, false);
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
+  resizeHook?.(camera.aspect);
 }
 window.addEventListener('resize', resize);
 resize();
@@ -127,10 +130,13 @@ function startLevel(id = levelId) {
     onFriendSay(id, obj) {
       if (phase !== 'play' && phase !== 'celebrate') return;
       if (levelId === 3) sfx.croak();
-      say(id, obj, levelId === 3 ? 0.8 : 1.0);
+      if (id === 'l4beetle') sfx.snore();
+      else if (levelId === 4 && obj === level.npc.root) sfx.pop();
+      say(id, obj, levelId === 3 ? 0.8 : levelId === 4 && obj !== level.npc.root ? 0.55 : 1.0);
     },
     onSplash: () => sfx.splash(),
     onSink: () => sfx.plop(),
+    onDig: (kind) => (kind === 'blocked' ? sfx.thud() : sfx.dig()),
     onRespawn: () => screens.fade(),
     onCritter(kind, obj) {
       // one speaker at a time: never interrupt a friend or another quip
@@ -143,6 +149,9 @@ function startLevel(id = levelId) {
     onStep: () => sfx.step(),
   });
   fader = new OcclusionFader(level.occluders);
+  const lv = level as { resizeUnderground?: (a: number) => void };
+  resizeHook = lv.resizeUnderground ? (a) => lv.resizeUnderground!(a) : null;
+  resizeHook?.(camera.aspect);
   level.steering = chaseCam;
   follow.setHeading(level.heading);
   screens.setGoal(level.goal.icon, level.goal.total);
@@ -151,6 +160,11 @@ function startLevel(id = levelId) {
   follow.cut(level.player.position);
   celebrateShotPending = false;
   phase = 'menu';
+}
+
+/** The underground scene of level 4 when the hamster is below the meadow. */
+function view3d(): { scene: THREE.Scene; camera: THREE.Camera } | null {
+  return (level as { view3d?: { scene: THREE.Scene; camera: THREE.Camera } | null } | undefined)?.view3d ?? null;
 }
 
 let lastQuip: LineId | null = null;
@@ -173,7 +187,7 @@ function say(id: LineId, speaker?: THREE.Object3D, speakerLift = 0.35) {
     () => {
       v.copy(who.position);
       v.y = speaker ? v.y + lift : lift;
-      v.project(camera);
+      v.project(view3d()?.camera ?? camera);
       if (v.z > 1) return null;
       return { x: (v.x * 0.5 + 0.5) * window.innerWidth, y: (-v.y * 0.5 + 0.5) * window.innerHeight };
     },
@@ -337,6 +351,19 @@ new GameLoop(
     follow.update(level.player.position, dt);
     fader.update(camera.position, level.player.position, dt);
     screens.updateControls(touch.joystickView, active && state.action);
+    screens.setAction(level.actionMode);
+    const ir = (level as { iris?: { k: number; center: { x: number; y: number } | null } | null }).iris;
+    if (ir) {
+      let c = ir.center;
+      if (!c) {
+        v.copy(level.player.position);
+        v.y += 0.3;
+        v.project(camera);
+        c = { x: v.x * 0.5 + 0.5, y: -v.y * 0.5 + 0.5 };
+      }
+      screens.iris(ir.k, c.x, c.y);
+    } else screens.iris(null, 0, 0);
+    screens.exitArrow((level as { exitIndicator?: { x: number; y: number; angle: number } | null }).exitIndicator ?? null);
 
     if (bubble) {
       bubbleT += dt;
@@ -347,7 +374,8 @@ new GameLoop(
     }
   },
   () => {
-    renderer.render(scene, camera);
+    const v3 = view3d();
+    renderer.render(v3?.scene ?? scene, v3?.camera ?? camera);
     bubble?.update();
   },
 ).start();

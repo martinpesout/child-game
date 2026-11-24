@@ -212,3 +212,16 @@ it('kvákání bez AudioContextu nespadne', () => {
   const s = new Sfx();
   expect(() => { s.croak(); s.plop(); }).not.toThrow();
 });
+
+it('hrabání, ťuk, chrápání a vykouknutí: ztlumeno nic, jinak zvuk; bez AudioContextu nespadnou', () => {
+  const none = new Sfx();
+  expect(() => { none.dig(); none.thud(); none.snore(); none.pop(); }).not.toThrow();
+  const s = new Sfx();
+  s.unlock();
+  s.setMuted(true);
+  s.dig(); s.thud(); s.snore(); s.pop();
+  expect(FakeCtx.oscillators).toBe(0);
+  s.setMuted(false);
+  s.thud(); s.snore(); s.pop();
+  expect(FakeCtx.oscillators).toBeGreaterThan(0);
+});

@@ -207,3 +207,13 @@ html, body { font-family: 'Baloo 2', ui-rounded, system-ui, sans-serif; }
 .fader { position: absolute; inset: 0; background: #0b2a3a; opacity: 0; pointer-events: none; }
 .fader.on { animation: dip 0.45s ease-out; }
 @keyframes dip { 0% { opacity: 0; } 33% { opacity: 0.8; } 100% { opacity: 0; } }
+
+/* cartoon iris between the meadow and the underground */
+.iris { position: absolute; inset: 0; pointer-events: none; display: none; }
+.iris.on { display: block; }
+/* arrow towards the maze exit when it is off screen */
+.exit-arrow { position: absolute; transform: translate(-50%, -50%); display: none; align-items: center; gap: 2px; pointer-events: none;
+  background: #fff8d6; border-radius: 999px; padding: 4px 10px; box-shadow: 0 3px 8px #0003; font-size: 26px; animation: exitPulse 1s ease-in-out infinite; }
+.exit-arrow.on { display: flex; }
+.exit-arrow b { display: inline-block; color: #e09a1a; }
+@keyframes exitPulse { 50% { transform: translate(-50%, -50%) scale(1.12); } }
