@@ -75,3 +75,20 @@ it('prime pošle tichou prázdnou větu (odemčení na iOS)', () => {
   expect(synth.spoken).toHaveLength(1);
   expect(synth.spoken[0].text).toBe('');
 });
+
+it('say zavolá onEnd, až věta dozní', () => {
+  const synth = fakeSynth([{ lang: 'cs-CZ', name: 'Zuzana' }]);
+  const s = new Speech(synth as unknown as SpeechSynthesis);
+  const onEnd = vi.fn();
+  s.say('Ahoj', onEnd);
+  (synth.spoken[0] as unknown as { onend: () => void }).onend();
+  expect(onEnd).toHaveBeenCalled();
+});
+
+it('bez českého hlasu zavolá onEnd hned', () => {
+  const synth = fakeSynth([]);
+  const s = new Speech(synth as unknown as SpeechSynthesis);
+  const onEnd = vi.fn();
+  s.say('Ahoj', onEnd);
+  expect(onEnd).toHaveBeenCalled();
+});

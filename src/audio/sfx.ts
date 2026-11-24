@@ -43,6 +43,8 @@ const MELODY: (number | null)[] = [
 const MUSIC_VOL = 0.7;
 /** Volume of a custom music track relative to the master (tracks are mastered loud). */
 const TRACK_VOL = 0.45;
+/** Music level while someone speaks. */
+const DUCK = 0.35;
 const LOOKAHEAD = 0.25;
 
 export class Sfx {
@@ -112,7 +114,7 @@ export class Sfx {
    * Plays a recorded clip through the (already unlocked) AudioContext, so it also works outside a tap on iOS.
    * Resolves to a handle for stopping it, or null if the clip is missing or can't be decoded.
    */
-  async playClip(url: string): Promise<{ stop(): void } | null> {
+  async playClip(url: string): Promise<{ stop(): void; ended: Promise<void> } | null> {
     const ctx = this.ctx;
     if (!ctx || !this.master) return null;
     let buf = this.clips.get(url);
@@ -129,8 +131,10 @@ export class Sfx {
     const src = ctx.createBufferSource();
     src.buffer = buf;
     src.connect(this.master);
+    const ended = new Promise<void>((resolve) => (src.onended = () => resolve()));
     src.start();
     return {
+      ended,
       stop: () => {
         try {
           src.stop();
@@ -215,6 +219,20 @@ export class Sfx {
   constructor(private readonly musicUrl?: string) {}
 
   private musicSrc: AudioBufferSourceNode | null = null;
+  private trackGain: GainNode | null = null;
+  private ducked = false;
+
+  /** Lower the music while someone speaks (and bring it back afterwards). */
+  duck(on: boolean): void {
+    this.ducked = on;
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    const k = on ? DUCK : 1;
+    const tc = on ? 0.08 : 0.35;
+    this.musicBus?.gain.setTargetAtTime(MUSIC_VOL * k, t, tc);
+    this.trackGain?.gain.setTargetAtTime(TRACK_VOL * k, t, tc);
+  }
   private musicOn = false;
 
   /** Background music: the custom track (e.g. from Suno) looped if available, else the generated melody. */
@@ -229,7 +247,8 @@ export class Sfx {
         const buf = await ctx.decodeAudioData(await res.arrayBuffer());
         if (!this.musicOn || !this.master) return;
         const gain = ctx.createGain();
-        gain.gain.value = TRACK_VOL;
+        gain.gain.value = TRACK_VOL * (this.ducked ? DUCK : 1);
+        this.trackGain = gain;
         gain.connect(this.master);
         const src = ctx.createBufferSource();
         src.buffer = buf;
@@ -277,6 +296,7 @@ export class Sfx {
       /* already stopped */
     }
     this.musicSrc = null;
+    this.trackGain = null;
   }
 
   /** Music bus: soft low-pass + a little echo, so the music sits gently behind the effects. */

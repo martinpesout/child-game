@@ -177,3 +177,18 @@ it('když vlastní skladba chybí, hraje generovaná melodie', async () => {
   s.stopMusic();
   vi.useRealTimers();
 });
+
+it('duck ztiší hudbu na třetinu a pak ji vrátí', () => {
+  vi.useFakeTimers();
+  const s = new Sfx();
+  s.unlock();
+  void s.startMusic();
+  const bus = (s as unknown as { musicBus: { gain: { setTargetAtTime: (...a: number[]) => unknown } } }).musicBus;
+  const spy = vi.spyOn(bus.gain, 'setTargetAtTime');
+  s.duck(true);
+  expect(spy.mock.calls.at(-1)![0]).toBeCloseTo(0.7 * 0.35);
+  s.duck(false);
+  expect(spy.mock.calls.at(-1)![0]).toBeCloseTo(0.7);
+  s.stopMusic();
+  vi.useRealTimers();
+});

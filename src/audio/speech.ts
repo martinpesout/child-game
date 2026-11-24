@@ -16,10 +16,11 @@ export class Speech {
     return !!this.synth;
   }
 
-  say(text: string): void {
-    if (!this.synth) return;
+  /** Speaks `text`; `onEnd` fires when it finished (or right away if nothing can be spoken). */
+  say(text: string, onEnd?: () => void): void {
+    if (!this.synth) return onEnd?.();
     if (!this.voice) this.pickVoice();
-    if (!this.voice) return;
+    if (!this.voice) return onEnd?.();
     try {
       this.synth.cancel();
       const u = new SpeechSynthesisUtterance(text);
@@ -28,9 +29,11 @@ export class Speech {
       // slightly slower and only a touch higher: friendly without the "chipmunk robot" effect
       u.rate = 0.9;
       u.pitch = 1.05;
+      u.onend = () => onEnd?.();
+      u.onerror = () => onEnd?.();
       this.synth.speak(u);
     } catch {
-      /* ignore */
+      onEnd?.();
     }
   }
 

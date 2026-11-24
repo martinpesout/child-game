@@ -4,11 +4,13 @@ export { LINES, type LineId };
 
 export interface ClipHandle {
   stop(): void;
+  /** Resolves when the clip finished playing. */
+  ended?: Promise<void>;
 }
 export type ClipPlayer = (url: string) => Promise<ClipHandle | null>;
 
 interface SpeechLike {
-  say(text: string): void;
+  say(text: string, onEnd?: () => void): void;
   stop(): void;
   prime(): void;
 }
@@ -27,12 +29,21 @@ export function bundledClips(): Partial<Record<LineId, string>> {
 export class VoiceLines {
   private token = 0;
   private current: ClipHandle | null = null;
+  private speaking = false;
 
+  /** `onSpeaking(true/false)` tells when a line starts and ends (used to duck the music). */
   constructor(
     private readonly speech: SpeechLike,
     private readonly clips: Partial<Record<LineId, string>>,
     private readonly play: ClipPlayer,
+    private readonly onSpeaking: (on: boolean) => void = () => {},
   ) {}
+
+  private setSpeaking(on: boolean): void {
+    if (this.speaking === on) return;
+    this.speaking = on;
+    this.onSpeaking(on);
+  }
 
   /** Call from inside the first tap so the device voice is allowed to speak later. */
   prime(): void {
@@ -41,19 +52,26 @@ export class VoiceLines {
 
   async say(id: LineId): Promise<void> {
     this.stop();
+    const mine = this.token;
+    const done = () => {
+      if (mine === this.token) this.setSpeaking(false);
+    };
+    this.setSpeaking(true);
     const url = this.clips[id];
     if (!url) {
-      this.speech.say(LINES[id]);
+      this.speech.say(LINES[id], done);
       return;
     }
-    const mine = this.token;
     const h = await this.play(url);
     if (mine !== this.token) {
       h?.stop();
       return;
     }
-    if (h) this.current = h;
-    else this.speech.say(LINES[id]);
+    if (h) {
+      this.current = h;
+      if (h.ended) void h.ended.then(done);
+      else done();
+    } else this.speech.say(LINES[id], done);
   }
 
   stop(): void {
@@ -61,5 +79,6 @@ export class VoiceLines {
     this.current?.stop();
     this.current = null;
     this.speech.stop();
+    this.setSpeaking(false);
   }
 }

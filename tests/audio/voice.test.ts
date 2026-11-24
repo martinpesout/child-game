@@ -18,7 +18,7 @@ it('bez nahrávky čte hlas zařízení hned (synchronně, ještě v rámci doty
   const play = vi.fn();
   const v = new VoiceLines(sp, {}, play);
   void v.say('thanks');
-  expect(sp.say).toHaveBeenCalledWith('Hurá, děkuju!');
+  expect(sp.say).toHaveBeenCalledWith('Hurá, děkuju!', expect.any(Function));
   expect(play).not.toHaveBeenCalled();
 });
 
@@ -36,7 +36,7 @@ it('když se nahrávka nepřehraje, použije hlas zařízení', async () => {
   const sp = speech();
   const v = new VoiceLines(sp, { intro: 'x/intro.m4a' }, async () => null);
   await v.say('intro');
-  expect(sp.say).toHaveBeenCalledWith(LINES.intro);
+  expect(sp.say).toHaveBeenCalledWith(LINES.intro, expect.any(Function));
 });
 
 it('stop během načítání nahrávky ji zastaví, jakmile začne – nic nehraje přes sebe', async () => {
@@ -63,4 +63,33 @@ it('včelky i motýli mají aspoň 3 různé hlášky', () => {
   const fly = Object.keys(LINES).filter((k) => k.startsWith('butterfly'));
   expect(bee.length).toBeGreaterThanOrEqual(3);
   expect(fly.length).toBeGreaterThanOrEqual(3);
+});
+
+it('hlásí začátek a konec řeči (nahrávka) – pro ztlumení hudby', async () => {
+  const sp = speech();
+  let end!: () => void;
+  const h = { stop: vi.fn(), ended: new Promise<void>((r) => (end = r)) };
+  const speaking: boolean[] = [];
+  const v = new VoiceLines(sp, { intro: 'x/intro.m4a' }, async () => h, (on) => speaking.push(on));
+  await v.say('intro');
+  expect(speaking).toEqual([true]);
+  end();
+  await h.ended;
+  await Promise.resolve();
+  expect(speaking).toEqual([true, false]);
+});
+
+it('hlásí konec řeči i u hlasu zařízení a při stop', () => {
+  const sp = { say: vi.fn((_t: string, onEnd?: () => void) => setTimeout(() => onEnd?.(), 10)), stop: vi.fn(), prime: vi.fn() };
+  vi.useFakeTimers();
+  const speaking: boolean[] = [];
+  const v = new VoiceLines(sp, {}, vi.fn(), (on) => speaking.push(on));
+  void v.say('thanks');
+  expect(speaking).toEqual([true]);
+  vi.advanceTimersByTime(20);
+  expect(speaking).toEqual([true, false]);
+  void v.say('thanks');
+  v.stop();
+  expect(speaking.at(-1)).toBe(false);
+  vi.useRealTimers();
 });
