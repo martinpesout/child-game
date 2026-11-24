@@ -1,7 +1,10 @@
 import type { ItemKind } from '../levels/level1Data';
 
 /** Small inline SVG icons used in the HUD and screens. */
-export const ICONS: Record<ItemKind | 'star' | 'sound' | 'mute' | 'pause' | 'jump' | 'hoop' | 'lock' | 'hamster' | 'flower', string> = {
+export const ICONS: Record<ItemKind | 'star' | 'sound' | 'mute' | 'pause' | 'jump' | 'hoop' | 'lock' | 'hamster' | 'flower' | 'paw' | 'enter' | 'mound', string> = {
+  paw: '<svg viewBox="0 0 40 40"><g fill="currentColor"><ellipse cx="20" cy="25" rx="8" ry="6.5"/><circle cx="11" cy="16" r="3.3"/><circle cx="16.5" cy="10.5" r="3.3"/><circle cx="23.5" cy="10.5" r="3.3"/><circle cx="29" cy="16" r="3.3"/></g></svg>',
+  enter: '<svg viewBox="0 0 40 40"><ellipse cx="20" cy="31" rx="12" ry="4.5" fill="currentColor" opacity=".55"/><path d="M20 7v16m-7-7l7 8 7-8" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  mound: '<svg viewBox="0 0 40 40"><path d="M4 32 Q20 6 36 32Z" fill="#9b6a43"/><circle cx="14" cy="26" r="2" fill="#7a4a26"/><circle cx="24" cy="21" r="2" fill="#7a4a26"/><circle cx="27" cy="28" r="1.6" fill="#7a4a26"/><path d="M2 33h36" stroke="#6b9e44" stroke-width="3" stroke-linecap="round"/></svg>',
   flower: '<svg viewBox="0 0 40 40"><path d="M20 22v14" stroke="#4e9a3a" stroke-width="3" stroke-linecap="round"/><path d="M20 31c4-5 9-4 9-4s-2 6-9 4z" fill="#5fb04a"/><g fill="#ff8fb1"><circle cx="20" cy="8" r="6"/><circle cx="28.5" cy="14" r="6"/><circle cx="25" cy="23" r="6"/><circle cx="15" cy="23" r="6"/><circle cx="11.5" cy="14" r="6"/></g><circle cx="20" cy="16" r="5" fill="#ffd84d"/></svg>',
   nut: '<svg viewBox="0 0 40 40"><ellipse cx="20" cy="24" rx="12" ry="13" fill="#b5743d"/><ellipse cx="20" cy="15" rx="13" ry="7" fill="#e9c48f"/><circle cx="20" cy="8.5" r="2.5" fill="#7a4a26"/><ellipse cx="15" cy="26" rx="3" ry="5" fill="#c98a52" opacity=".6"/></svg>',
   strawberry: '<svg viewBox="0 0 40 40"><path d="M20 37C10 30 6 22 8 15c2-5 8-6 12-4 4-2 10-1 12 4 2 7-2 15-12 22z" fill="#e8344a"/><path d="M12 10l4 3 4-5 4 5 4-3-2 5H14z" fill="#4caf50"/><g fill="#fff3a0"><circle cx="15" cy="20" r="1.2"/><circle cx="24" cy="19" r="1.2"/><circle cx="19" cy="26" r="1.2"/><circle cx="26" cy="26" r="1.2"/><circle cx="14" cy="27" r="1.2"/></g></svg>',

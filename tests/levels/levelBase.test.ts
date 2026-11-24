@@ -67,3 +67,49 @@ it('stín pod křečkem je ve scéně a po dispose zmizí', () => {
   l.dispose();
   expect(scene.getObjectByName('blobShadow')).toBeUndefined();
 });
+
+class ActionLevel extends EmptyLevel {
+  mode: 'jump' | 'dig' | 'enter' = 'dig';
+  actions: string[] = [];
+  isComplete(): boolean {
+    return false;
+  }
+  protected currentAction() {
+    return this.mode;
+  }
+  protected onAction(m: 'jump' | 'dig' | 'enter') {
+    this.actions.push(m);
+  }
+}
+const press = (on: boolean) => ({ move: { x: 0, y: 0 }, action: on });
+const bodyY = (l: LevelBase) => (l as unknown as { body: { pos: { y: number } } }).body.pos.y;
+
+it('u hromádky se držené tlačítko počítá jen jednou a křeček neskočí', () => {
+  const l = new ActionLevel();
+  l.setup(new THREE.Scene(), events());
+  for (let i = 0; i < 30; i++) l.update(1 / 60, press(true), 0);
+  expect(l.actions).toEqual(['dig']);
+  expect(bodyY(l)).toBe(0);
+  expect(l.actionMode).toBe('dig');
+  l.update(1 / 60, press(false), 0);
+  l.update(1 / 60, press(true), 0);
+  expect(l.actions).toEqual(['dig', 'dig']);
+  l.dispose();
+});
+
+it('po odchodu od hromádky s drženým tlačítkem nevyskočí, po novém stisku ano', () => {
+  const l = new ActionLevel();
+  l.setup(new THREE.Scene(), events());
+  l.update(1 / 60, press(true), 0);
+  l.mode = 'jump';
+  for (let i = 0; i < 20; i++) l.update(1 / 60, press(true), 0);
+  expect(bodyY(l)).toBe(0);
+  l.update(1 / 60, press(false), 0);
+  let peak = 0;
+  for (let i = 0; i < 20; i++) {
+    l.update(1 / 60, press(true), 0);
+    peak = Math.max(peak, bodyY(l));
+  }
+  expect(peak).toBeGreaterThan(0.3);
+  l.dispose();
+});

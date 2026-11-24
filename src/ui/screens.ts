@@ -34,6 +34,7 @@ export class Screens {
   private readonly muteBtn: HTMLButtonElement;
   readonly bubbleLayer: HTMLDivElement;
   private readonly fader: HTMLDivElement;
+  private actionVal = 'jump';
 
   constructor(root: HTMLElement, handlers: { onPause: () => void; onToggleMute: () => boolean }) {
     this.bubbleLayer = el('div', 'layer');
@@ -145,6 +146,14 @@ export class Screens {
     btns.append(button('Znovu', '', onRetry), button('Mapa', '', onMap), button('Dál', 'big', onNext));
     card.append(el('h2', '', 'Hurá!'), row, btns);
     this.show('dim', [card]);
+  }
+
+  /** Action button icon: jump, paw (dig) or into the hole (enter). */
+  setAction(mode: 'jump' | 'dig' | 'enter'): void {
+    if (mode === this.actionVal) return;
+    this.actionVal = mode;
+    this.jumpBtn.dataset.action = mode;
+    this.jumpBtn.innerHTML = mode === 'dig' ? ICONS.paw : mode === 'enter' ? ICONS.enter : ICONS.jump;
   }
 
   /** Short dip to dark (e.g. when the hamster is put back after a splash). */

@@ -22,6 +22,9 @@ const TREAT_SCALE = 1.8;
 const CRITTER_NEAR = 1.5;
 const CRITTER_REPEAT = 10;
 
+/** What the action button does right now. */
+export type ActionMode = 'jump' | 'dig' | 'enter';
+
 export interface Treat {
   spot: ItemSpot;
   root: THREE.Group;
@@ -65,6 +68,10 @@ export abstract class LevelBase implements Level {
   private steerMode = false;
   private headingVal = Math.PI;
   private critterCooldown = 0;
+  private prevAction = false;
+  /** After a dig/enter press, a still-held button must not turn into a jump. */
+  private jumpLock = false;
+  private modeVal: ActionMode = 'jump';
   private readonly tmp = new THREE.Vector3();
   private readonly lift = new THREE.Vector3(0, 0.45, 0);
 
@@ -86,6 +93,12 @@ export abstract class LevelBase implements Level {
   protected canJump(): boolean {
     return true;
   }
+  /** What the action button does at the moment (e.g. 'dig' next to a mound). */
+  protected currentAction(): ActionMode {
+    return 'jump';
+  }
+  /** A press (rising edge) of the action button while it is not a jump. */
+  protected onAction(_mode: ActionMode): void {}
   /** Start of the celebration (confetti + happy hamster by default). */
   protected onCelebrate(): void {
     this.hamster.anim.celebrate();
@@ -97,6 +110,11 @@ export abstract class LevelBase implements Level {
   protected resetHeading(h: number): void {
     this.hamster.face(h);
     this.headingVal = h;
+  }
+
+  /** Current meaning of the action button (for the HUD icon). */
+  get actionMode(): ActionMode {
+    return this.modeVal;
   }
 
   get player(): THREE.Object3D {
@@ -157,6 +175,9 @@ export abstract class LevelBase implements Level {
 
     this.critters = new Critters(scene, l.physics.bounds.halfSize);
     this.critterCooldown = 0;
+    this.prevAction = false;
+    this.jumpLock = false;
+    this.modeVal = 'jump';
 
     this.kit = new PartKit();
     this.treats = l.treats.map((spot, i) => {
@@ -186,8 +207,20 @@ export abstract class LevelBase implements Level {
         wish = r.wish;
       } else wish = cameraRelative(input.move, cameraYaw);
     }
+    const mode: ActionMode = celebrating ? 'jump' : this.currentAction();
+    this.modeVal = mode;
+    const pressed = input.action && !this.prevAction;
+    this.prevAction = input.action;
+    let jump = false;
+    if (mode !== 'jump') {
+      this.jumpLock = true;
+      if (pressed) this.onAction(mode);
+    } else {
+      if (!input.action) this.jumpLock = false;
+      jump = !celebrating && input.action && !this.jumpLock && this.canJump();
+    }
     const wasGrounded = this.body.grounded;
-    stepBody(this.body, wish, !celebrating && input.action && this.canJump(), dt, this.physics);
+    stepBody(this.body, wish, jump, dt, this.physics);
     if (wasGrounded && this.body.vel.y > 0) this.events.onJump?.();
     const gaitBefore = this.hamster.anim.gaitPhase;
     this.hamster.sync(this.body, dt);
