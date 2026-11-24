@@ -231,6 +231,7 @@ export abstract class LevelBase implements Level {
   private updateCelebration(dt: number): void {
     if (this.isComplete() && this.celebrateLeft < 0 && !this.completedFired) {
       this.celebrateLeft = this.celebrationTime;
+      this.events.onFinished?.(this.stars());
       this.onCelebrate();
       this.confetti = new Confetti(this.hamster.root.position);
       this.scene.add(this.confetti.mesh);

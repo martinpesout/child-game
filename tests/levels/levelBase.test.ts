@@ -44,3 +44,17 @@ it('křeček stojí na terénu při startu', () => {
   expect(l.player.position.y).toBeCloseTo(0.3);
   l.dispose();
 });
+
+it('onFinished přijde hned při splnění cíle (ještě před oslavou), právě jednou', () => {
+  const scene = new THREE.Scene();
+  const l = new EmptyLevel();
+  const onFinished = vi.fn();
+  const e = { ...events(), onFinished };
+  l.setup(scene, e);
+  l.update(1 / 60, { move: { x: 0, y: 0 }, action: false }, 0);
+  expect(onFinished).toHaveBeenCalledWith(1);
+  expect(e.onComplete).not.toHaveBeenCalled();
+  for (let i = 0; i < 200; i++) l.update(1 / 60, { move: { x: 0, y: 0 }, action: false }, 0);
+  expect(onFinished).toHaveBeenCalledTimes(1);
+  l.dispose();
+});

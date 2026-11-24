@@ -111,6 +111,10 @@ function startLevel(id = levelId) {
       screens.fillGoal(index);
       if (level.goal.icon !== 'nut') sfx.collectNut(index);
     },
+    onFinished(stars) {
+      // save right away: the child may leave via Pause → Map during the celebration
+      progress.complete(levelId, stars);
+    },
     onComplete(stars) {
       flow.complete(stars);
     },

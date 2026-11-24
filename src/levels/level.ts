@@ -5,7 +5,10 @@ import type { LineId } from '../audio/lines';
 
 export interface LevelEvents {
   onCollect(kind: ItemKind, nutsCollected: number, nutsTotal: number): void;
+  /** Shown after the celebration: time for the end screen. */
   onComplete(stars: number): void;
+  /** The goal was just reached (before the celebration) – save progress here so leaving early never loses it. */
+  onFinished?(stars: number): void;
   onNearNpc(): void;
   /** A level goal item was reached (nut collected, gate passed): index 0-based. */
   onGoal?(index: number, total: number): void;
