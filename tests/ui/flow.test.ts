@@ -85,3 +85,20 @@ it('kolo 3 → Dál → příběh kola 4; po kole 4 „už brzy“', () => {
   f.next();
   expect(f.screen).toBe('comingSoon');
 });
+
+it('po posledním kole „Dál“ vede na konec hry a odtud na mapu', () => {
+  const f = new Flow((n) => n <= 5, 5);
+  f.start(); f.pick(5); f.continue(); f.complete(3);
+  f.next();
+  expect(f.screen).toBe('gameEnd');
+  f.toMap();
+  expect(f.screen).toBe('map');
+});
+
+it('po kole 4 (kolo 5 hotové) „Dál“ vede na příběh kola 5', () => {
+  const f = new Flow((n) => n <= 5, 5);
+  f.start(); f.pick(4); f.continue(); f.complete(2);
+  f.next();
+  expect(f.screen).toBe('story');
+  expect(f.current).toBe(5);
+});

@@ -229,3 +229,9 @@ html, body { font-family: 'Baloo 2', ui-rounded, system-ui, sans-serif; }
 .action-badge svg { width: 100%; height: 100%; display: block; }
 .action-badge::after { content: ''; position: absolute; left: 50%; bottom: -7px; margin-left: -7px; border: 7px solid transparent; border-bottom: 0; border-top-color: #ffc93c; }
 @keyframes badgeBob { 50% { transform: translateY(-6px); } }
+
+/* end of the whole game */
+.game-end .game-end-hamster { width: 110px; height: 110px; margin: 0 auto; animation: badgeBob 1.2s ease-in-out infinite; }
+.game-end .game-end-hamster svg { width: 100%; height: 100%; }
+.game-end .stars { align-items: center; gap: 10px; }
+.game-end .star-count { font-size: 40px; font-weight: 800; color: #e09a1a; }

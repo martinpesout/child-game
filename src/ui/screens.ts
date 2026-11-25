@@ -203,6 +203,16 @@ export class Screens {
     this.fader.classList.add('on');
   }
 
+  /** The very end of the game: the hamster is home. Shows the stars from all levels. */
+  gameEnd(stars: number, maxStars: number, onMap: () => void): void {
+    this.setPlaying(false);
+    const card = el('div', 'card end game-end');
+    const row = el('div', 'stars');
+    row.append(el('div', 'star on', ICONS.star), el('span', 'star-count', `${stars} / ${maxStars}`));
+    card.append(el('div', 'game-end-hamster', ICONS.hamster), el('h2', '', 'Křeček je doma!'), el('p', 'story-text', 'Zvládl jsi celé dobrodružství!'), row, button('Na mapu', 'big', onMap));
+    this.show('dim', [card]);
+  }
+
   comingSoon(onHome: () => void): void {
     const card = el('div', 'card');
     card.append(el('h2', '', 'Další dobrodružství už brzy!'), button('Zpět na mapu', 'big', onHome));

@@ -56,3 +56,13 @@ it('změna akce na hrabání tlačítko rozpulzuje a nad křečkem ukáže bubli
   s.actionBadge(null, 0, 0);
   expect(badge.classList.contains('on')).toBe(false);
 });
+
+it('konec hry ukáže text a součet hvězd; tlačítko vede na mapu', () => {
+  const { root, s } = make();
+  const onMap = vi.fn();
+  s.gameEnd(12, 15, onMap);
+  expect(root.textContent).toContain('Křeček je doma');
+  expect(root.textContent).toContain('12');
+  (root.querySelector('.panel button') as HTMLButtonElement).click();
+  expect(onMap).toHaveBeenCalled();
+});

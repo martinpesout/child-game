@@ -1,4 +1,4 @@
-export type Screen = 'title' | 'map' | 'story' | 'playing' | 'paused' | 'levelEnd' | 'comingSoon';
+export type Screen = 'title' | 'map' | 'story' | 'playing' | 'paused' | 'levelEnd' | 'comingSoon' | 'gameEnd';
 
 /** Screen state machine; invalid transitions are ignored. `canPlay(n)` says whether level n may be started. */
 export class Flow {
@@ -7,7 +7,11 @@ export class Flow {
   lastStars = 0;
   private listeners: ((s: Screen) => void)[] = [];
 
-  constructor(private readonly canPlay: (level: number) => boolean = () => true) {}
+  constructor(
+    private readonly canPlay: (level: number) => boolean = () => true,
+    /** Number of the last level: finishing it ends the whole game. */
+    private readonly lastLevel = Infinity,
+  ) {}
 
   onChange(cb: (s: Screen) => void): void {
     this.listeners.push(cb);
@@ -33,14 +37,15 @@ export class Flow {
 
   next(): void {
     if (this.screen !== 'levelEnd') return;
-    if (this.canPlay(this.current + 1)) {
+    if (this.current >= this.lastLevel) this.set('gameEnd');
+    else if (this.canPlay(this.current + 1)) {
       this.current++;
       this.set('story');
     } else this.set('comingSoon');
   }
 
   toMap(): void {
-    if (this.screen === 'levelEnd' || this.screen === 'paused' || this.screen === 'comingSoon') this.set('map');
+    if (this.screen === 'levelEnd' || this.screen === 'paused' || this.screen === 'comingSoon' || this.screen === 'gameEnd') this.set('map');
   }
 
   pause(): void { this.go('playing', 'paused'); }
