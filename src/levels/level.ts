@@ -27,6 +27,12 @@ export interface LevelEvents {
   onDig?(kind: 'mound' | 'soil' | 'crumble' | 'blocked'): void;
   /** The buried alarm clock goes off. */
   onRing?(): void;
+  /** The buried rubber duck squeaks. */
+  onSqueak?(): void;
+  /** The cat caught the hamster moving (level 5). */
+  onMeow?(): void;
+  /** The house door opens (level 5 finale). */
+  onDoor?(): void;
   /** The hamster bumped into a puddle. */
   onSplash?(): void;
 }

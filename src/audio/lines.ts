@@ -57,5 +57,18 @@ export const LINES = {
   l4beetle: 'Chrrr… Cože? Kdo mě budí? No nic, dobrou!',
   l4dino: 'Cvak cvak! Neboj, to je jen stará kostra.',
   l4finish: 'Děkuju, kamaráde! Teď máme plnou spíž.',
+  l5story: 'Spíž je plná. Křeček se vrací domů a kamarádi ho vyprovázejí!',
+  l5intro: 'Naposledy závod? Proběhni obručemi!',
+  l5frog: 'Hop přes potůček!',
+  l5mole: 'Pod plotem se prohrabeš!',
+  l5duck: 'Pííp! Kdo tady zakopal gumovou kachnu?',
+  l5yard: 'Pst! Kocour spí. Když otevře oko, stůj jako socha!',
+  l5meow: 'Mňau! Koho to tu slyším?',
+  l5sleep: 'Mrrr… jen jsem si zdřímnul.',
+  l5home1: 'Vítej doma, kamaráde!',
+  l5home2: 'Hurá, zvládl jsi to!',
+  l5home3: 'Kvák! Jsi ten nejlepší skokan!',
+  l5home4: 'Ať se ti v zimě dobře spinká!',
+  l5end: 'Křeček je doma! Zvládl jsi celé dobrodružství!',
 } as const;
 export type LineId = keyof typeof LINES;
