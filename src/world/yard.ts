@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 /** Yard props of level 5: hiding spots against the cat (with a shade on the ground) and the home fence. */
 
@@ -74,29 +75,25 @@ export function makeHideShade(r: number): THREE.Mesh {
 }
 
 /**
- * Wooden plank fence across the world at z, from -half to +half, built in 4 m chunks (each chunk is a child group,
- * so only the part between the camera and the hamster fades out).
+ * Wooden plank fence across the world at z, from -half to +half, built in 4 m chunks. Each chunk is two meshes
+ * (planks with tips merged, and the rails) with its own materials, so only the chunk in front of the hamster fades.
  */
 export function makeHomeFence(z: number, half: number): THREE.Group {
   const g = new THREE.Group();
-  const wood = mat(0xb07a45);
-  const dark = mat(0x8a5a35);
   for (let x0 = -half; x0 < half; x0 += 4) {
     const chunk = new THREE.Group();
+    const parts: THREE.BufferGeometry[] = [];
     for (let x = x0; x < Math.min(half, x0 + 4) - 0.01; x += 0.32) {
-      const plank = new THREE.Mesh(new THREE.BoxGeometry(0.26, 1.5 + Math.sin(x * 3) * 0.08, 0.06), wood);
-      plank.position.set(x + 0.16, 0.75, z);
-      chunk.add(plank);
-      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.2, 4), wood);
-      tip.position.set(x + 0.16, 1.6, z);
-      tip.rotation.y = Math.PI / 4;
-      chunk.add(tip);
+      const h = 1.5 + Math.sin(x * 3) * 0.08;
+      parts.push(new THREE.BoxGeometry(0.26, h, 0.06).translate(x + 0.16, h / 2, z));
+      parts.push(new THREE.ConeGeometry(0.15, 0.2, 4).rotateY(Math.PI / 4).translate(x + 0.16, 1.6, z));
     }
-    for (const y of [0.4, 1.15]) {
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(4, 0.1, 0.08), dark);
-      rail.position.set(x0 + 2, y, z - 0.07);
-      chunk.add(rail);
-    }
+    const planks = new THREE.Mesh(mergeGeometries(parts.map((p) => p.toNonIndexed())), mat(0xb07a45));
+    parts.forEach((p) => p.dispose());
+    chunk.add(planks);
+    const rails = [0.4, 1.15].map((y) => new THREE.BoxGeometry(4, 0.1, 0.08).translate(x0 + 2, y, z - 0.07).toNonIndexed());
+    chunk.add(new THREE.Mesh(mergeGeometries(rails), mat(0x8a5a35)));
+    rails.forEach((r) => r.dispose());
     g.add(chunk);
   }
   return shadowy(g);

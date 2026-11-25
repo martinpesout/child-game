@@ -223,6 +223,8 @@ export class Level5Home extends LevelBase {
   }
 
   protected onSetup(): void {
+    // the apple in the maze counts too
+    this.bonusTotal += LEVEL5.maze.items.length;
     this.hoopTracker = new GateTracker(this.hoops);
     this.ug = new Underground(LEVEL5.maze);
     this.watch = new CatWatch(this.catOpts);
@@ -234,7 +236,7 @@ export class Level5Home extends LevelBase {
     this.mole = new Mole();
     this.mole.root.position.set(LEVEL5.hole.x + 1.2, 0, LEVEL5.hole.z + 0.3);
     this.hedgehog = new Hedgehog();
-    this.hedgehog.root.position.set(-1.6, 0, LEVEL5.fenceZ - 1.3);
+    this.hedgehog.root.position.set(-3.4, 0, LEVEL5.fenceZ - 1.0);
     this.cat = new Cat();
     this.cat.root.position.set(LEVEL5.yard.cat.x, 0, LEVEL5.yard.cat.z);
     this.cat.root.rotation.y = -Math.PI / 2 - 0.4;
@@ -256,6 +258,7 @@ export class Level5Home extends LevelBase {
     this.flee = null;
     this.lastShade = null;
     this.yardSaid = false;
+    this.catState = 'sleep';
     this.entered = false;
     this.finaleT = -1;
     this.finaleSaid = 0;
@@ -315,6 +318,7 @@ export class Level5Home extends LevelBase {
         this.arrive(this.trans.to);
       }
       if (this.trans.t >= IRIS) this.trans = null;
+      this.prevTap = input.action;
       if (this.placeVal === 'underground') this.ug.update(dt, input.move, false, true);
       else super.update(dt, { move: { x: 0, y: 0 }, action: false }, cameraYaw);
       this.lockAction();

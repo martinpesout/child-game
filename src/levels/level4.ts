@@ -168,6 +168,8 @@ export class Level4Tree extends LevelBase {
     this.mole.root.position.set(LEVEL4.moleHome.x, 0, LEVEL4.moleHome.z);
     this.moleTarget.copy(this.mole.root.position);
     this.scene.add(this.mole.root);
+    // treats hidden in the mazes count towards the stars too
+    this.bonusTotal += LEVEL4_MAZES.reduce((n, d) => n + d.items.length, 0);
     this.ugs = LEVEL4_MAZES.map((d) => {
       const u = new Underground(d);
       u.resize(this.aspect);

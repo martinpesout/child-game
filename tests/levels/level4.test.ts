@@ -288,3 +288,9 @@ it('držené tlačítko po návratu na louku nezpůsobí skok ani nové vlezení
   expect(peak).toBe(0);
   l.dispose();
 });
+
+it('hvězdy ve 4. kole: celkem 3 dobroty (povrch + obě bludiště)', () => {
+  const { l } = setup();
+  expect(l.bonuses.total).toBe(3);
+  l.dispose();
+});

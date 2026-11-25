@@ -39,3 +39,14 @@ it('plot u domu je z úseků, aby se zprůhlednila jen část před křečkem', 
   const f = makeHomeFence(-7, 20);
   expect(f.children.length).toBe(10);
 });
+
+it('plot má málo dílů (výkon) a každý úsek má vlastní materiál (zprůhlední se jen on)', async () => {
+  const { makeHomeFence } = await import('../../src/world/yard');
+  const f = makeHomeFence(-7, 20);
+  let meshes = 0;
+  f.traverse((o) => { if ((o as THREE.Mesh).isMesh) meshes++; });
+  expect(meshes).toBeLessThanOrEqual(30);
+  const m0 = (f.children[0].children[0] as THREE.Mesh).material;
+  const m1 = (f.children[1].children[0] as THREE.Mesh).material;
+  expect(m0).not.toBe(m1);
+});

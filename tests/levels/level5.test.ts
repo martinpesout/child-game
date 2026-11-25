@@ -209,3 +209,22 @@ it('3× setup/dispose (i pod zemí) nenechá ve scéně nic navíc a view3d je p
     expect(scene.children.length).toBe(base);
   }
 });
+
+it('hvězdy: 3 jen za všechny 3 dobroty (i tu v bludišti)', () => {
+  const { l } = setup();
+  for (const b of LEVEL5.bonuses) put(l, b.x, b.z);
+  expect(l.bonuses).toEqual({ collected: 2, total: 3 });
+  l.dispose();
+});
+
+it('držené tlačítko při zalezení do bludiště nezahrabe samo', () => {
+  const { l } = setup();
+  (l as unknown as { done: number }).done = 2;
+  put(l, LEVEL5.hole.x, LEVEL5.hole.z);
+  // the tap that started the dive is still held through the iris and the first frames underground
+  l.update(1 / 60, { move: { x: 0, y: 0 }, action: true }, 0);
+  tick(l, 1.4, { move: { x: 0, y: 0 }, action: true });
+  expect(l.mode).toBe('underground');
+  expect(l.ug.grid.hp(1, 1)).toBe(2);
+  l.dispose();
+});
