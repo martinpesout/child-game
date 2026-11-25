@@ -1,8 +1,8 @@
 import { LEVELS } from '../../src/levels/registry';
 
-it('5 kol; hotová jsou 1–4 a mají tvorbu, příběh a úvodní větu', () => {
+it('5 kol; hotová jsou 1–5 a mají tvorbu, příběh a úvodní větu', () => {
   expect(LEVELS.map((l) => l.id)).toEqual([1, 2, 3, 4, 5]);
-  expect(LEVELS.filter((l) => l.ready).map((l) => l.id)).toEqual([1, 2, 3, 4]);
+  expect(LEVELS.filter((l) => l.ready).map((l) => l.id)).toEqual([1, 2, 3, 4, 5]);
   for (const l of LEVELS.filter((x) => x.ready)) {
     expect(typeof l.create).toBe('function');
     expect(l.story).toBeTruthy();
@@ -26,4 +26,10 @@ it('kolo 4 vytvoří Level4Tree s krtkem', async () => {
   expect(l).toBeInstanceOf(Level4Tree);
   expect(LEVELS[3].story).toBe('l4story');
   expect(LEVELS[3].intro).toBe('l4intro');
+});
+
+it('kolo 5 vytvoří cestu domů', async () => {
+  const { Level5Home } = await import('../../src/levels/level5');
+  expect(LEVELS[4].create!()).toBeInstanceOf(Level5Home);
+  expect(LEVELS[4].story).toBe('l5story');
 });

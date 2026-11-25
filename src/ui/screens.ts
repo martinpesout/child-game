@@ -38,6 +38,7 @@ export class Screens {
   private readonly irisLayer: HTMLDivElement;
   private readonly exitArrowEl: HTMLDivElement;
   private readonly badge: HTMLDivElement;
+  private readonly catHintEl: HTMLDivElement;
 
   constructor(root: HTMLElement, handlers: { onPause: () => void; onToggleMute: () => boolean }) {
     this.bubbleLayer = el('div', 'layer');
@@ -80,7 +81,8 @@ export class Screens {
     this.irisLayer = el('div', 'iris');
     this.exitArrowEl = el('div', 'exit-arrow', '<span>☀</span><b>➜</b>');
     this.badge = el('div', 'action-badge');
-    root.append(this.controls, this.hud, this.bubbleLayer, this.badge, this.exitArrowEl, this.fader, this.irisLayer, this.panel, rotate);
+    this.catHintEl = el('div', 'cat-hint', `${ICONS.stop}<span>Stůj jako socha!</span>`);
+    root.append(this.controls, this.hud, this.bubbleLayer, this.catHintEl, this.badge, this.exitArrowEl, this.fader, this.irisLayer, this.panel, rotate);
   }
 
   setMuted(m: boolean): void {
@@ -217,6 +219,21 @@ export class Screens {
     const card = el('div', 'card');
     card.append(el('h2', '', 'Další dobrodružství už brzy!'), button('Zpět na mapu', 'big', onHome));
     this.show('dim', [card]);
+  }
+
+  /** Goal row with a different icon per slot (level 5 sections). */
+  setGoalIcons(icons: string[]): void {
+    this.goalBar.replaceChildren();
+    this.goalSlots = icons.map((icon) => {
+      const s = el('div', 'slot', ICONS[icon as keyof typeof ICONS] ?? ICONS.nut);
+      this.goalBar.appendChild(s);
+      return s;
+    });
+  }
+
+  /** Big ✋ "freeze!" while the cat wakes up and looks. */
+  catHint(on: boolean): void {
+    this.catHintEl.classList.toggle('on', on);
   }
 
   /** Goal row in the HUD: `total` outlines of the goal icon (nuts, hoops…). */

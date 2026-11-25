@@ -1,13 +1,19 @@
 import type { LineId } from '../src/audio/lines';
 
-export type Speaker = 'narrator' | 'hedgehog' | 'bee' | 'butterfly' | 'squirrel' | 'frog' | 'mole' | 'worm' | 'beetle';
+export type Speaker = 'narrator' | 'hedgehog' | 'bee' | 'butterfly' | 'squirrel' | 'frog' | 'mole' | 'worm' | 'beetle' | 'cat';
 
 /** A character without its own voice borrows another one. */
-const FALLBACK: Partial<Record<Speaker, Speaker>> = { mole: 'hedgehog', worm: 'butterfly', beetle: 'bee' };
+const FALLBACK: Partial<Record<Speaker, Speaker>> = { mole: 'hedgehog', worm: 'butterfly', beetle: 'bee', cat: 'narrator' };
 
 /** Who says each line – each character can get its own ElevenLabs voice. */
 export function speakerFor(id: LineId): Speaker {
   if (id === 'story' || id === 'l2story' || id === 'l3story' || id === 'l4story') return 'narrator';
+  if (id === 'l5story' || id === 'l5end') return 'narrator';
+  if (id === 'l5meow' || id === 'l5sleep') return 'cat';
+  if (id === 'l5intro' || id === 'l5home2') return 'squirrel';
+  if (id === 'l5frog' || id === 'l5home3') return 'frog';
+  if (id === 'l5mole' || id === 'l5home4' || id === 'l5duck') return 'mole';
+  if (id === 'l5yard' || id === 'l5home1') return 'hedgehog';
   if (id === 'l4worm' || id === 'l4stone' || id === 'l4clock') return 'worm';
   if (id === 'l4beetle' || id === 'l4dino') return 'beetle';
   if (id.startsWith('l4')) return 'mole';

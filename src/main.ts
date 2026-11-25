@@ -14,7 +14,7 @@ import { LEVELS, type PlayableLevel } from './levels/registry';
 import { LevelProgress } from './core/progress';
 import { LINES, VoiceLines, bundledClips, type LineId } from './audio/voice';
 import { installAudioUnlock, watchBackground } from './core/background';
-import { Sfx } from './audio/sfx';
+import { Sfx, type SfxClip } from './audio/sfx';
 import { Speech } from './audio/speech';
 import { Flow, type Screen } from './ui/flow';
 import { Screens } from './ui/screens';
@@ -49,13 +49,15 @@ const touch = new TouchController(canvas);
 const input = new CombinedController([new KeyboardController(window), touch]);
 // optional custom background track: drop src/assets/music/theme.mp3 (or .m4a) in, otherwise the generated melody plays
 const musicTrack = Object.values(import.meta.glob('./assets/music/theme.{mp3,m4a}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>)[0];
-const digSound = Object.values(import.meta.glob('./assets/sfx/dig.{mp3,m4a,wav}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>)[0];
-const sfx = new Sfx(musicTrack, { dig: digSound });
+// recorded sound effects: drop src/assets/sfx/<name>.mp3 in (dig, meow, purr, creak, squeak), otherwise generated sounds play
+const sfxFiles = import.meta.glob('./assets/sfx/*.{mp3,m4a,wav}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const sfxClips = Object.fromEntries(Object.entries(sfxFiles).map(([path, url]) => [path.split('/').pop()!.replace(/\.\w+$/, ''), url])) as Partial<Record<SfxClip, string>>;
+const sfx = new Sfx(musicTrack, sfxClips);
 const voice = new VoiceLines(new Speech(), bundledClips(), (url) => sfx.playClip(url), (speaking) => sfx.duck(speaking));
 
 const progress = new LevelProgress(LEVELS.length);
 const canPlay = (n: number) => !!LEVELS[n - 1]?.ready && progress.isUnlocked(n);
-const flow = new Flow(canPlay);
+const flow = new Flow(canPlay, LEVELS.length);
 let muted = storage.get('muted', false);
 sfx.setMuted(muted);
 const screens = new Screens(document.getElementById('ui')!, {
@@ -138,6 +140,10 @@ function startLevel(id = levelId) {
     onSplash: () => sfx.splash(),
     onSink: () => sfx.plop(),
     onRing: () => sfx.ring(),
+    onMeow: () => sfx.meow(),
+    onPurr: () => sfx.purr(),
+    onDoor: () => sfx.creak(),
+    onSqueak: () => sfx.squeak(),
     onDig: (kind) => (kind === 'blocked' ? sfx.thud() : kind === 'crumble' ? sfx.crumble() : sfx.dig()),
     onRespawn: () => screens.fade(),
     onCritter(kind, obj) {
@@ -156,7 +162,9 @@ function startLevel(id = levelId) {
   resizeHook?.(camera.aspect);
   level.steering = chaseCam;
   follow.setHeading(level.heading);
-  screens.setGoal(level.goal.icon, level.goal.total);
+  const icons = (level as { goalIcons?: string[] }).goalIcons;
+  if (icons) screens.setGoalIcons(icons);
+  else screens.setGoal(level.goal.icon, level.goal.total);
   screens.resetHud();
   follow.closeup(level.heading);
   follow.cut(level.player.position);
@@ -280,6 +288,13 @@ flow.onChange((s) => {
       progress.complete(levelId, flow.lastStars);
       screens.levelEnd(flow.lastStars, () => flow.retry(), () => flow.next(), () => flow.toMap());
       break;
+    case 'gameEnd': {
+      sfx.fanfare();
+      const total = LEVELS.reduce((sum, l) => sum + progress.best(l.id), 0);
+      screens.gameEnd(total, LEVELS.length * 3, () => flow.toMap());
+      if (!muted) void voice.say('l5end');
+      break;
+    }
     case 'comingSoon':
       sfx.click();
       screens.comingSoon(() => flow.toMap());
@@ -362,6 +377,7 @@ new GameLoop(
       bubble = null;
     }
     screens.setAction(level.actionMode);
+    screens.catHint(active && !!(level as { catHint?: boolean }).catHint);
     // bubble over the hamster on the meadow when the button means dig / into the hole
     const am = level.actionMode;
     if (active && am !== 'jump' && !view3d()) {

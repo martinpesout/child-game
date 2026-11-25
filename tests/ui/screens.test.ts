@@ -66,3 +66,13 @@ it('konec hry ukáže text a součet hvězd; tlačítko vede na mapu', () => {
   (root.querySelector('.panel button') as HTMLButtonElement).click();
   expect(onMap).toHaveBeenCalled();
 });
+
+it('lišta s různými ikonami úseků a nápověda ✋ u kocoura', () => {
+  const { root, s } = make();
+  s.setGoalIcons(['hoop', 'stone', 'paw', 'cat', 'house']);
+  expect(root.querySelectorAll('.slots.nuts .slot')).toHaveLength(5);
+  s.catHint(true);
+  expect(root.querySelector('.cat-hint')!.classList.contains('on')).toBe(true);
+  s.catHint(false);
+  expect(root.querySelector('.cat-hint')!.classList.contains('on')).toBe(false);
+});

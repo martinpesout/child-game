@@ -66,3 +66,18 @@ it('nastavení hlasu jde upravit (stabilita, styl) – pro klidnější a čist�
   const calm = JSON.parse(elevenLabsRequest('v', 'Ahoj', 'k', { stability: 0.6, style: 0.2 }).init.body as string);
   expect(calm.voice_settings).toMatchObject({ stability: 0.6, style: 0.2, similarity_boost: 0.75 });
 });
+
+it('kolo 5: kocour bez vlastního hlasu mluví hlasem vypravěče; kamarádi svými hlasy', () => {
+  expect(speakerFor('l5story')).toBe('narrator');
+  expect(speakerFor('l5end')).toBe('narrator');
+  expect(speakerFor('l5meow')).toBe('cat');
+  expect(speakerFor('l5intro')).toBe('squirrel');
+  expect(speakerFor('l5home2')).toBe('squirrel');
+  expect(speakerFor('l5frog')).toBe('frog');
+  expect(speakerFor('l5home3')).toBe('frog');
+  expect(speakerFor('l5mole')).toBe('mole');
+  expect(speakerFor('l5duck')).toBe('mole');
+  expect(speakerFor('l5yard')).toBe('hedgehog');
+  expect(speakerFor('l5home1')).toBe('hedgehog');
+  expect(voiceIdFor('cat', { ELEVENLABS_VOICE_NARRATOR: 'n' })).toBe('n');
+});

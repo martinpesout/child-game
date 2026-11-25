@@ -33,6 +33,8 @@ export interface LevelEvents {
   onMeow?(): void;
   /** The house door opens (level 5 finale). */
   onDoor?(): void;
+  /** The cat settles back to sleep. */
+  onPurr?(): void;
   /** The hamster bumped into a puddle. */
   onSplash?(): void;
 }

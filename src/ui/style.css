@@ -235,3 +235,10 @@ html, body { font-family: 'Baloo 2', ui-rounded, system-ui, sans-serif; }
 .game-end .game-end-hamster svg { width: 100%; height: 100%; }
 .game-end .stars { align-items: center; gap: 10px; }
 .game-end .star-count { font-size: 40px; font-weight: 800; color: #e09a1a; }
+
+/* "freeze!" hint while the cat looks */
+.cat-hint { position: absolute; top: 74px; left: 50%; transform: translateX(-50%); display: none; align-items: center; gap: 8px; pointer-events: none;
+  background: #fff8d6; border-radius: 999px; padding: 6px 16px 6px 8px; box-shadow: 0 4px 12px #0003; font-size: 24px; font-weight: 800; color: #6b3f1f; }
+.cat-hint.on { display: flex; animation: hintShake 0.5s ease-in-out infinite; }
+.cat-hint svg { width: 44px; height: 44px; }
+@keyframes hintShake { 25% { transform: translateX(-50%) rotate(-4deg); } 75% { transform: translateX(-50%) rotate(4deg); } }

@@ -542,7 +542,10 @@ export class Level5Home extends LevelBase {
       if (r === 'caught') this.caught();
     }
     if (this.catState !== this.watch.state && this.watching()) {
-      if (this.watch.state === 'sleep' && this.catState === 'look') this.cat.laugh();
+      if (this.watch.state === 'sleep' && this.catState === 'look') {
+        this.cat.laugh();
+        this.events.onPurr?.();
+      }
       this.catState = this.watch.state;
     }
     this.cat.setState(this.watching() ? this.watch.state : 'sleep', this.watch.progress);

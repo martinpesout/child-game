@@ -1,7 +1,11 @@
 import type { ItemKind } from '../levels/level1Data';
 
 /** Small inline SVG icons used in the HUD and screens. */
-export const ICONS: Record<ItemKind | 'star' | 'sound' | 'mute' | 'pause' | 'jump' | 'hoop' | 'lock' | 'hamster' | 'flower' | 'paw' | 'enter' | 'mound', string> = {
+export const ICONS: Record<ItemKind | 'star' | 'sound' | 'mute' | 'pause' | 'jump' | 'hoop' | 'lock' | 'hamster' | 'flower' | 'paw' | 'enter' | 'mound' | 'stone' | 'cat' | 'house' | 'stop', string> = {
+  stone: '<svg viewBox="0 0 40 40"><ellipse cx="20" cy="30" rx="16" ry="5" fill="#6fb8e8"/><ellipse cx="20" cy="24" rx="12" ry="8" fill="#b8b2a8"/><ellipse cx="17" cy="21" rx="5" ry="2.5" fill="#d6d0c6"/></svg>',
+  cat: '<svg viewBox="0 0 40 40"><path d="M9 14l3-9 6 6h4l6-6 3 9v8c0 8-6 13-11 13S9 30 9 22z" fill="#f0a04b"/><path d="M14 22q3-2 6 0M20 22q3-2 6 0" stroke="#5a3a20" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="20" cy="26" r="1.6" fill="#f4a6b0"/></svg>',
+  house: '<svg viewBox="0 0 40 40"><path d="M6 19L20 7l14 12" stroke="#b5643a" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><rect x="10" y="18" width="20" height="16" rx="2" fill="#e2b77f"/><path d="M17 34v-7a3 3 0 0 1 6 0v7z" fill="#7a4a26"/></svg>',
+  stop: '<svg viewBox="0 0 40 40"><path d="M13 21V9a2 2 0 0 1 4 0v9-11a2 2 0 0 1 4 0v11-9a2 2 0 0 1 4 0v10-6a2 2 0 0 1 4 0v12c0 7-5 11-10 11-4 0-6-2-9-6l-4-6a2 2 0 0 1 3-3z" fill="#ffd84d" stroke="#b5843a" stroke-width="1.5"/></svg>',
   paw: '<svg viewBox="0 0 40 40"><g fill="currentColor"><ellipse cx="20" cy="25" rx="8" ry="6.5"/><circle cx="11" cy="16" r="3.3"/><circle cx="16.5" cy="10.5" r="3.3"/><circle cx="23.5" cy="10.5" r="3.3"/><circle cx="29" cy="16" r="3.3"/></g></svg>',
   enter: '<svg viewBox="0 0 40 40"><ellipse cx="20" cy="31" rx="12" ry="4.5" fill="currentColor" opacity=".55"/><path d="M20 7v16m-7-7l7 8 7-8" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   mound: '<svg viewBox="0 0 40 40"><path d="M4 32 Q20 6 36 32Z" fill="#9b6a43"/><circle cx="14" cy="26" r="2" fill="#7a4a26"/><circle cx="24" cy="21" r="2" fill="#7a4a26"/><circle cx="27" cy="28" r="1.6" fill="#7a4a26"/><path d="M2 33h36" stroke="#6b9e44" stroke-width="3" stroke-linecap="round"/></svg>',

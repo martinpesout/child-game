@@ -47,6 +47,9 @@ const TRACK_VOL = 0.45;
 const DUCK = 0.35;
 const LOOKAHEAD = 0.25;
 
+/** Recorded sound effects that can replace the generated ones (files in src/assets/sfx/). */
+export type SfxClip = 'dig' | 'meow' | 'purr' | 'creak' | 'squeak';
+
 export class Sfx {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
@@ -184,7 +187,7 @@ export class Sfx {
   dig(): void {
     if (!this.ctx) return;
     // recorded claw rakes, each a little higher or lower so quick digging doesn't repeat
-    if (this.digBuf) return this.playBuf(this.digBuf, 0.92 + Math.random() * 0.16, 1);
+    if (this.clip('dig', 0.92 + Math.random() * 0.16, 1)) return;
     const t = this.ctx.currentTime;
     this.pour(t, 0.5, 0.5, 28);
     this.toneAt(t + 0.02, 110, 0.1, 'sine', 0.25, 70);
@@ -194,9 +197,8 @@ export class Sfx {
   crumble(): void {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
-    if (this.digBuf) {
+    if (this.clip('dig', 0.78, 1)) {
       // the same rakes, slower and deeper, with a thump of falling earth
-      this.playBuf(this.digBuf, 0.78, 1);
       this.toneAt(t, 80, 0.3, 'sine', 0.45, 48);
       return;
     }
@@ -225,6 +227,34 @@ export class Sfx {
       this.tone(f, 0.05, 'triangle', 0.09 * (1 - i / 40), i * 0.06);
       this.tone(f * 2.76, 0.04, 'sine', 0.03 * (1 - i / 40), i * 0.06);
     }
+  }
+
+  /** The cat: "meow!" (a recorded clip if there is one). */
+  meow(): void {
+    if (this.clip('meow', 1, 1)) return;
+    this.tone(620, 0.18, 'sawtooth', 0.08, 0, 900);
+    this.tone(900, 0.35, 'sawtooth', 0.08, 0.16, 480);
+    this.tone(450, 0.4, 'sine', 0.06, 0.16, 300);
+  }
+
+  /** The cat settles back to sleep: a soft purr. */
+  purr(): void {
+    if (this.clip('purr', 1, 0.8)) return;
+    for (let i = 0; i < 8; i++) this.tone(55 + (i % 2) * 6, 0.09, 'sawtooth', 0.05, i * 0.1, 50);
+  }
+
+  /** The house door creaks open. */
+  creak(): void {
+    if (this.clip('creak', 1, 0.9)) return;
+    this.tone(300, 0.5, 'sawtooth', 0.04, 0, 520);
+    this.tone(420, 0.35, 'square', 0.02, 0.15, 260);
+  }
+
+  /** The rubber duck squeaks. */
+  squeak(): void {
+    if (this.clip('squeak', 1, 1)) return;
+    this.tone(1300, 0.12, 'square', 0.06, 0, 1900);
+    this.tone(1700, 0.16, 'square', 0.05, 0.13, 1100);
   }
 
   /** Paw against a stone: a dull knock. */
@@ -296,28 +326,38 @@ export class Sfx {
   constructor(
     private readonly musicUrl?: string,
     /** Recorded sound effects (e.g. the dig sound); the generated ones are used until they load. */
-    private readonly sfxUrls: { dig?: string } = {},
+    private readonly sfxUrls: Partial<Record<SfxClip, string>> = {},
   ) {}
 
-  private digBuf: AudioBuffer | null = null;
+  private readonly bufs = new Map<SfxClip, AudioBuffer>();
   private clipsLoading: Promise<void> | null = null;
 
-  /** Loads the recorded sound effects (after the audio is unlocked; a failed load is retried next time). */
+  /** Loads the recorded sound effects (after the audio is unlocked; anything missing is retried next time). */
   async loadClips(): Promise<void> {
     if (this.clipsLoading) await this.clipsLoading;
     const ctx = this.ctx;
-    const url = this.sfxUrls.dig;
-    if (!ctx || this.digBuf || !url) return;
+    const todo = (Object.entries(this.sfxUrls) as [SfxClip, string | undefined][]).filter(([k, u]) => u && !this.bufs.has(k));
+    if (!ctx || !todo.length) return;
     this.clipsLoading = (async () => {
-      try {
-        const res = await fetch(url);
-        if (res.ok) this.digBuf = await ctx.decodeAudioData(await res.arrayBuffer());
-      } catch {
-        /* keep the generated sound */
+      for (const [k, url] of todo) {
+        try {
+          const res = await fetch(url!);
+          if (res.ok) this.bufs.set(k, await ctx.decodeAudioData(await res.arrayBuffer()));
+        } catch {
+          /* keep the generated sound */
+        }
       }
     })();
     await this.clipsLoading;
     this.clipsLoading = null;
+  }
+
+  /** Plays a recorded clip if it is loaded (returns false so the caller can fall back to a generated sound). */
+  private clip(k: SfxClip, rate: number, vol: number): boolean {
+    const b = this.bufs.get(k);
+    if (!b) return false;
+    this.playBuf(b, rate, vol);
+    return true;
   }
 
   /** Plays a decoded buffer once at a playback rate (pitch) and volume. */

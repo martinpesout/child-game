@@ -4,6 +4,7 @@ import { Level1Meadow } from './level1';
 import { Level2Garden } from './level2';
 import { Level3Brook } from './level3';
 import { Level4Tree } from './level4';
+import { Level5Home } from './level5';
 
 /** A friend in the level who talks and waves (hedgehog, squirrel…). */
 export interface Npc {
@@ -31,5 +32,5 @@ export const LEVELS: LevelInfo[] = [
   { id: 2, name: 'Zahrada', ready: true, story: 'l2story', intro: 'l2intro', create: () => new Level2Garden() },
   { id: 3, name: 'Kamenitá cesta', ready: true, story: 'l3story', intro: 'l3intro', create: () => new Level3Brook() },
   { id: 4, name: 'Pod stromem', ready: true, story: 'l4story', intro: 'l4intro', create: () => new Level4Tree() },
-  { id: 5, name: 'Domů', ready: false },
+  { id: 5, name: 'Domů', ready: true, story: 'l5story', intro: 'l5intro', create: () => new Level5Home() },
 ];

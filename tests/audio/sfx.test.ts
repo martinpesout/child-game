@@ -279,3 +279,19 @@ it('budík drnčí: ztlumeno nic, jinak zvuk', () => {
   s.ring();
   expect(FakeCtx.oscillators).toBeGreaterThan(8);
 });
+
+it('kocour, dveře a kachna: ztlumeno nic, jinak zvuk; bez AudioContextu nespadnou', () => {
+  const none = new Sfx();
+  expect(() => { none.meow(); none.purr(); none.creak(); none.squeak(); }).not.toThrow();
+  const s = new Sfx();
+  s.unlock();
+  s.setMuted(true);
+  s.meow(); s.purr(); s.creak(); s.squeak();
+  expect(FakeCtx.oscillators).toBe(0);
+  s.setMuted(false);
+  for (const f of ['meow', 'purr', 'creak', 'squeak'] as const) {
+    const before = FakeCtx.oscillators;
+    s[f]();
+    expect(FakeCtx.oscillators, f).toBeGreaterThan(before);
+  }
+});
