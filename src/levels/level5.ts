@@ -125,7 +125,8 @@ export class Level5Home extends LevelBase {
   get finishShot(): { from: THREE.Vector3; at: THREE.Vector3 } | null {
     if (!this.entered) return null;
     const d = LEVEL5.door;
-    return { from: new THREE.Vector3(d.x + 1.2, 2.4, d.z + 5.5), at: new THREE.Vector3(d.x, 0.8, d.z - 0.8) };
+    // from the left, so the watering can (a hiding spot) is not in the way
+    return { from: new THREE.Vector3(d.x - 2.6, 2.3, d.z + 4.6), at: new THREE.Vector3(d.x + 0.2, 0.7, d.z - 0.6) };
   }
 
   isComplete(): boolean {
@@ -169,7 +170,8 @@ export class Level5Home extends LevelBase {
     this.group.add(this.ripples.root);
 
     // fence and the hole under it
-    this.group.add(makeHomeFence(LEVEL5.fenceZ, LEVEL5.halfSize));
+    const fence = makeHomeFence(LEVEL5.fenceZ, LEVEL5.halfSize);
+    this.group.add(fence);
     const hole = makeHole();
     hole.position.set(LEVEL5.hole.x, 0, LEVEL5.hole.z);
     this.group.add(hole);
@@ -208,6 +210,8 @@ export class Level5Home extends LevelBase {
       ],
       exclude: (_x, z) => Math.abs(z - LEVEL5.brook.z) < LEVEL5.brook.halfWidth + 0.2,
     });
+    // the fence fades where it hides the hamster (chunk by chunk), as do the hiding spots
+    view.occluders.push(...fence.children);
     const start = this.course.pointAt(0);
     const t0 = this.course.tangentAt(0);
     return {
@@ -290,10 +294,10 @@ export class Level5Home extends LevelBase {
     // everyone gathers around the house
     const d = LEVEL5.door;
     const spots: [THREE.Object3D, number, number][] = [
-      [this.hedgehog.root, -1.6, 0.6],
-      [this.squirrel.root, 1.7, 0.7],
-      [this.frog.root, -1.0, 1.7],
-      [this.mole.root, 1.0, 1.8],
+      [this.hedgehog.root, -1.7, 0.6],
+      [this.squirrel.root, 1.7, 0.5],
+      [this.frog.root, -0.9, 1.6],
+      [this.mole.root, 0.7, 1.4],
     ];
     for (const [o, dx, dz] of spots) o.position.set(d.x + dx, 0, d.z + dz);
     this.hedgehog.hop();

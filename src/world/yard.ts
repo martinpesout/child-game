@@ -73,24 +73,31 @@ export function makeHideShade(r: number): THREE.Mesh {
   return shade;
 }
 
-/** Wooden plank fence across the world at z (with roots at its foot), from -half to +half. */
+/**
+ * Wooden plank fence across the world at z, from -half to +half, built in 4 m chunks (each chunk is a child group,
+ * so only the part between the camera and the hamster fades out).
+ */
 export function makeHomeFence(z: number, half: number): THREE.Group {
   const g = new THREE.Group();
   const wood = mat(0xb07a45);
   const dark = mat(0x8a5a35);
-  for (let x = -half; x <= half; x += 0.32) {
-    const plank = new THREE.Mesh(new THREE.BoxGeometry(0.26, 1.5 + Math.sin(x * 3) * 0.08, 0.06), wood);
-    plank.position.set(x, 0.75, z);
-    g.add(plank);
-    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.2, 4), wood);
-    tip.position.set(x, 1.6, z);
-    tip.rotation.y = Math.PI / 4;
-    g.add(tip);
-  }
-  for (const y of [0.4, 1.15]) {
-    const rail = new THREE.Mesh(new THREE.BoxGeometry(half * 2, 0.1, 0.08), dark);
-    rail.position.set(0, y, z - 0.07);
-    g.add(rail);
+  for (let x0 = -half; x0 < half; x0 += 4) {
+    const chunk = new THREE.Group();
+    for (let x = x0; x < Math.min(half, x0 + 4) - 0.01; x += 0.32) {
+      const plank = new THREE.Mesh(new THREE.BoxGeometry(0.26, 1.5 + Math.sin(x * 3) * 0.08, 0.06), wood);
+      plank.position.set(x + 0.16, 0.75, z);
+      chunk.add(plank);
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.2, 4), wood);
+      tip.position.set(x + 0.16, 1.6, z);
+      tip.rotation.y = Math.PI / 4;
+      chunk.add(tip);
+    }
+    for (const y of [0.4, 1.15]) {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(4, 0.1, 0.08), dark);
+      rail.position.set(x0 + 2, y, z - 0.07);
+      chunk.add(rail);
+    }
+    g.add(chunk);
   }
   return shadowy(g);
 }

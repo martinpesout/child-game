@@ -66,7 +66,7 @@ export const LEVEL5 = {
       { kind: 'crate', x: -1.2, z: -9.0 },
       { kind: 'pot', x: 1.4, z: -10.4 },
       { kind: 'bush', x: -1.6, z: -12.0 },
-      { kind: 'can', x: 1.0, z: -13.3 },
+      { kind: 'can', x: 2.4, z: -13.0 },
     ] as Cover[],
     shadeR: 1.0,
   },

@@ -33,3 +33,9 @@ it('úkryty jsou dost vysoké na schování křečka a stín leží na zemi', ()
   expect(shade.position.y).toBeLessThan(0.05);
   expect(typeof shade.userData.setActive).toBe('function');
 });
+
+it('plot u domu je z úseků, aby se zprůhlednila jen část před křečkem', async () => {
+  const { makeHomeFence } = await import('../../src/world/yard');
+  const f = makeHomeFence(-7, 20);
+  expect(f.children.length).toBe(10);
+});
