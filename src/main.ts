@@ -130,12 +130,12 @@ function startLevel(id = levelId) {
         if (left >= 1 && left <= 9) say(`remaining${left}` as LineId);
       }
     },
-    onFriendSay(id, obj) {
+    onFriendSay(id, obj, onEnd) {
       if (phase !== 'play' && phase !== 'celebrate') return;
       if (levelId === 3) sfx.croak();
       if (id === 'l4beetle') sfx.snore();
       else if (levelId === 4 && obj === level.npc.root) sfx.pop();
-      say(id, obj, levelId === 3 ? 0.8 : levelId === 4 && obj !== level.npc.root ? 0.55 : 1.0);
+      say(id, obj, levelId === 3 ? 0.8 : levelId === 4 && obj !== level.npc.root ? 0.55 : 1.0, onEnd);
     },
     onSplash: () => sfx.splash(),
     onSink: () => sfx.plop(),
@@ -186,7 +186,7 @@ function pickQuip(kind: 'bee' | 'butterfly'): LineId {
 }
 
 /** Shows a speech bubble over `speaker` (the level's friend by default) and reads the line aloud. */
-function say(id: LineId, speaker?: THREE.Object3D, speakerLift = 0.35) {
+function say(id: LineId, speaker?: THREE.Object3D, speakerLift = 0.35, onEnd?: () => void) {
   const text = LINES[id];
   bubble?.hide();
   if (!speaker) level.npc.wave();
@@ -209,7 +209,9 @@ function say(id: LineId, speaker?: THREE.Object3D, speakerLift = 0.35) {
   );
   bubbleT = 0;
   if (!speaker || speaker === level.npc.root) sfx.chatter(text.length / 4);
-  if (!muted) void voice.say(id);
+  if (!muted) void voice.say(id, onEnd);
+  // muted: still give the line its time, so lines that must not overlap keep their order
+  else if (onEnd) setTimeout(onEnd, 600 + text.length * 55);
 }
 
 function beginIntro() {

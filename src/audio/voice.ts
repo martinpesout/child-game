@@ -50,11 +50,14 @@ export class VoiceLines {
     this.speech.prime();
   }
 
-  async say(id: LineId): Promise<void> {
+  /** Speaks a line; `onEnd` is called when it finishes (not when another line interrupts it). */
+  async say(id: LineId, onEnd?: () => void): Promise<void> {
     this.stop();
     const mine = this.token;
     const done = () => {
-      if (mine === this.token) this.setSpeaking(false);
+      if (mine !== this.token) return;
+      this.setSpeaking(false);
+      onEnd?.();
     };
     this.setSpeaking(true);
     const url = this.clips[id];

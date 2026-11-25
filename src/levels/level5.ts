@@ -29,7 +29,12 @@ const GRACE = 0.5;
 const FLEE_TIME = 0.6;
 const HOLE_REACH = 1.1;
 const DOOR_REACH = 1.3;
-const FRIEND_GAP = 1.1;
+/** Pause between two friends' lines in the finale. */
+const FRIEND_GAP = 0.3;
+/** If a line never reports its end (no sound), the next friend speaks after this long anyway. */
+const LINE_SAFETY = 4.5;
+/** Longest the finale may hold the end screen. */
+const FINALE_MAX = 25;
 
 type Place = 'surface' | 'underground';
 
@@ -75,10 +80,14 @@ export class Level5Home extends LevelBase {
   private entered = false;
   private finaleT = -1;
   private finaleSaid = 0;
+  private finaleWaiting = false;
+  private finaleWaitT = 0;
+  private finaleNextAt = 0.4;
 
   constructor(private readonly catOpts: ConstructorParameters<typeof CatWatch>[0] = {}) {
     super();
-    this.celebrationTime = 6;
+    // the finale holds the end screen until every friend has spoken (holdCelebration), then waits this long
+    this.celebrationTime = 1.2;
   }
 
   get goal() {
@@ -262,6 +271,8 @@ export class Level5Home extends LevelBase {
     this.entered = false;
     this.finaleT = -1;
     this.finaleSaid = 0;
+    this.finaleWaiting = false;
+    this.finaleNextAt = 0.4;
     this.t = 0;
   }
 
@@ -404,8 +415,12 @@ export class Level5Home extends LevelBase {
     if (i === 1) this.say('l5mole', this.mole.root);
   }
 
-  private say(id: LineId, obj: THREE.Object3D): void {
-    this.events.onFriendSay?.(id, obj);
+  private say(id: LineId, obj: THREE.Object3D, onEnd?: () => void): void {
+    this.events.onFriendSay?.(id, obj, onEnd);
+  }
+
+  protected holdCelebration(): boolean {
+    return this.entered && (this.finaleSaid < 4 || this.finaleWaiting) && this.finaleT < FINALE_MAX;
   }
 
   private updateArrow(): void {
@@ -592,6 +607,7 @@ export class Level5Home extends LevelBase {
     this.putAt(LEVEL5.door.x, 0, LEVEL5.door.z - 0.2, 0);
   }
 
+  /** Friends say their lines one after another – each waits until the previous one has finished. */
   private updateFinale(dt: number): void {
     this.finaleT += dt;
     const lines: [LineId, THREE.Object3D][] = [
@@ -600,10 +616,27 @@ export class Level5Home extends LevelBase {
       ['l5home3', this.frog.root],
       ['l5home4', this.mole.root],
     ];
-    while (this.finaleSaid < lines.length && this.finaleT >= 0.4 + this.finaleSaid * FRIEND_GAP) {
-      const [id, obj] = lines[this.finaleSaid++];
-      this.say(id, obj);
+    if (this.finaleWaiting) {
+      this.finaleWaitT += dt;
+      if (this.finaleWaitT >= LINE_SAFETY) this.lineDone();
+      return;
     }
+    if (this.finaleSaid < lines.length && this.finaleT >= this.finaleNextAt) {
+      const [id, obj] = lines[this.finaleSaid++];
+      // set before speaking: the end can be reported right away (no sound)
+      this.finaleWaiting = true;
+      this.finaleWaitT = 0;
+      const mine = this.finaleSaid;
+      this.say(id, obj, () => {
+        if (this.finaleSaid === mine) this.lineDone();
+      });
+    }
+  }
+
+  private lineDone(): void {
+    if (!this.finaleWaiting) return;
+    this.finaleWaiting = false;
+    this.finaleNextAt = this.finaleT + FRIEND_GAP;
   }
 }
 

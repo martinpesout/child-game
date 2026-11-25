@@ -117,7 +117,7 @@ it('celá cesta (obruče → potok → bludiště → dvorek → domek) dokonč�
   tap(l);
   expect(l.isComplete()).toBe(true);
   expect(e.goals).toEqual([0, 1, 2, 3, 4]);
-  tick(l, 7);
+  tick(l, 22); // no sound in tests: each line waits for the safety timeout
   expect(e.completed).toEqual([3]);
   const finale = e.lines.filter((x) => x.startsWith('l5home'));
   expect(finale).toEqual(['l5home1', 'l5home2', 'l5home3', 'l5home4']);
@@ -226,5 +226,36 @@ it('držené tlačítko při zalezení do bludiště nezahrabe samo', () => {
   tick(l, 1.4, { move: { x: 0, y: 0 }, action: true });
   expect(l.mode).toBe('underground');
   expect(l.ug.grid.hp(1, 1)).toBe(2);
+  l.dispose();
+});
+
+it('finále: další kamarád promluví až po dořečení předchozího a hvězdy počkají', () => {
+  const { l } = setup();
+  const said: string[] = [];
+  const ends: (() => void)[] = [];
+  const ev = events();
+  const scene = new THREE.Scene();
+  const l2 = new Level5Home({ firstSleep: 999, laterSleep: 999 });
+  l2.setup(scene, { ...ev, onFriendSay: (id: string, _o: unknown, onEnd?: () => void) => { said.push(id); if (onEnd) ends.push(onEnd); } } as never);
+  (l2 as unknown as { done: number }).done = 4;
+  put(l2, LEVEL5.door.x, LEVEL5.door.z);
+  tap(l2);
+  tick(l2, 1);
+  expect(said.filter((x) => x.startsWith('l5home'))).toEqual(['l5home1']);
+  tick(l2, 2); // the first one is still talking (no end yet, below the safety timeout)
+  expect(said.filter((x) => x.startsWith('l5home'))).toEqual(['l5home1']);
+  ends.shift()!();
+  tick(l2, 0.5);
+  expect(said.filter((x) => x.startsWith('l5home'))).toEqual(['l5home1', 'l5home2']);
+  ends.shift()!();
+  tick(l2, 0.5);
+  ends.shift()!();
+  tick(l2, 0.5);
+  expect(ev.completed).toEqual([]);
+  ends.shift()!();
+  tick(l2, 1.5);
+  expect(said.filter((x) => x.startsWith('l5home'))).toHaveLength(4);
+  expect(ev.completed).toHaveLength(1);
+  l2.dispose();
   l.dispose();
 });

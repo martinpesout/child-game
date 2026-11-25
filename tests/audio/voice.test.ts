@@ -93,3 +93,21 @@ it('hlásí konec řeči i u hlasu zařízení a při stop', () => {
   expect(speaking.at(-1)).toBe(false);
   vi.useRealTimers();
 });
+
+it('say(id, onEnd) zavolá onEnd po dořečení, ale ne když ji přeruší jiná věta', async () => {
+  let resolveA!: () => void;
+  const a = Object.assign(handle(), { ended: new Promise<void>((r) => (resolveA = r)) });
+  const b = Object.assign(handle(), { ended: new Promise<void>(() => {}) });
+  const handles = [a, b];
+  const v = new VoiceLines(speech(), { l5home1: 'a.m4a', l5home2: 'b.m4a' }, vi.fn(async () => handles.shift()!));
+  const endA = vi.fn();
+  await v.say('l5home1', endA);
+  resolveA();
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(endA).toHaveBeenCalledTimes(1);
+  const endB = vi.fn();
+  await v.say('l5home2', endB);
+  await v.say('l5home1'); // interrupts B
+  expect(endB).not.toHaveBeenCalled();
+});

@@ -18,7 +18,8 @@ export interface LevelEvents {
   /** The hamster came close to a bee or butterfly (decorative chatter). */
   onCritter?(kind: 'bee' | 'butterfly', obj: THREE.Object3D): void;
   /** The level's friend (squirrel, frog) says a line. */
-  onFriendSay?(id: LineId, obj: THREE.Object3D): void;
+  /** `onEnd` (optional) is called when the line has been spoken – for lines that must not overlap. */
+  onFriendSay?(id: LineId, obj: THREE.Object3D, onEnd?: () => void): void;
   /** The hamster is put back after falling into water (short fade). */
   onRespawn?(): void;
   /** A lily pad started to sink. */

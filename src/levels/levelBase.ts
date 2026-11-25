@@ -108,6 +108,10 @@ export abstract class LevelBase implements Level {
   protected onCelebrate(): void {
     this.hamster.anim.celebrate();
   }
+  /** While true, the celebration waits before the end screen (e.g. friends still talking). */
+  protected holdCelebration(): boolean {
+    return false;
+  }
   /** Movement is frozen while celebrating; levels may still move the hamster themselves. */
   protected onDispose(): void {}
 
@@ -289,7 +293,7 @@ export abstract class LevelBase implements Level {
       this.scene.add(this.confetti.mesh);
     }
     if (this.celebrateLeft >= 0) {
-      this.celebrateLeft -= dt;
+      if (!this.holdCelebration()) this.celebrateLeft -= dt;
       if (this.celebrateLeft < 0 && !this.completedFired) {
         this.completedFired = true;
         this.events.onComplete(this.stars());
