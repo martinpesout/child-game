@@ -226,3 +226,52 @@ export function makeDino(w: number, h: number): THREE.Group {
   g.position.y = 0.1 * s;
   return g;
 }
+
+/** Giant yellow rubber duck stuck in the soil (w × h). `userData.squeak(t, k)` wobbles it when bumped. */
+export function makeDuck(w: number, h: number): THREE.Group {
+  const g = new THREE.Group();
+  const duck = new THREE.Group();
+  g.add(duck);
+  const s = Math.min(w / 1.55, h / 1.25);
+  const yellow = mat(0xffd23a, { roughness: 0.35 });
+  const orange = mat(0xff8a2b, { roughness: 0.4 });
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.42 * s, 22, 16), yellow);
+  body.scale.set(1.35, 0.85, 0.9);
+  body.position.y = -0.15 * s;
+  duck.add(body);
+  const tail = new THREE.Mesh(new THREE.ConeGeometry(0.14 * s, 0.3 * s, 12), yellow);
+  tail.rotation.z = Math.PI / 2 + 0.6;
+  tail.position.set(-0.55 * s, 0.02 * s, 0);
+  duck.add(tail);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.27 * s, 20, 14), yellow);
+  head.position.set(0.32 * s, 0.32 * s, 0);
+  duck.add(head);
+  const beak = new THREE.Mesh(new THREE.SphereGeometry(0.13 * s, 14, 10), orange);
+  beak.scale.set(1.6, 0.55, 1);
+  beak.position.set(0.58 * s, 0.26 * s, 0);
+  duck.add(beak);
+  for (const z of [-0.14, 0.14]) {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05 * s, 10, 8), mat(0x1a1210, { roughness: 0.2 }));
+    eye.position.set(0.42 * s, 0.4 * s, z * s + 0.1 * s);
+    duck.add(eye);
+    const shine = new THREE.Mesh(new THREE.SphereGeometry(0.017 * s, 6, 6), mat(0xffffff));
+    shine.position.set(0.45 * s, 0.42 * s, z * s + 0.14 * s);
+    duck.add(shine);
+  }
+  const wing = new THREE.Mesh(new THREE.SphereGeometry(0.2 * s, 14, 10), mat(0xf5c32e, { roughness: 0.4 }));
+  wing.scale.set(1.3, 0.7, 0.4);
+  wing.position.set(-0.08 * s, -0.08 * s, 0.33 * s);
+  duck.add(wing);
+  // stuck in the soil: tilted, a lump of earth over its bottom
+  duck.rotation.z = -0.18;
+  const lump = new THREE.Mesh(new THREE.SphereGeometry(0.5 * s, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat(0x7a5032));
+  lump.scale.set(1.6, 0.35, 0.7);
+  lump.position.set(0, -0.48 * s, 0.1 * s);
+  g.add(lump);
+  g.userData.squeak = (t: number, k: number) => {
+    const sq = 1 - Math.abs(Math.sin(t * 22)) * 0.12 * k;
+    duck.scale.set(1 / sq, sq, 1);
+    duck.rotation.z = -0.18 + Math.sin(t * 17) * 0.12 * k;
+  };
+  return g;
+}

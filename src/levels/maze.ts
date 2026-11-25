@@ -3,7 +3,7 @@ import type { ItemKind } from './level1Data';
 /** Underground digging maze (pure logic): a grid of soil, stones, roots, big buried things and one exit. */
 
 export type CellKind = 'soil' | 'stone' | 'roots' | 'open' | 'exit' | 'big';
-export type BigKind = 'clock' | 'dino' | 'boot' | 'can' | 'bones';
+export type BigKind = 'clock' | 'dino' | 'duck' | 'boot' | 'can' | 'bones';
 
 export interface MazeDef {
   /** '.' soil, '#' stone, 'R' roots (solid ceiling), 'E' exit (in the roots row), 'o' open (entry, pockets). */

@@ -176,3 +176,20 @@ it('budík se po narazení rozdrnčí: kladívko buší a budík se třese', asy
   expect(u.clockRinging).toBe(false);
   u.dispose();
 });
+
+it('gumová kachna v hlíně: vejde se do svých políček a po narazení zapiští (zakymácí se)', async () => {
+  const { makeDuck } = await import('../../src/world/buried');
+  const duck = makeDuck(1.14, 1.14);
+  const b = new THREE.Box3().setFromObject(duck);
+  expect(b.max.x - b.min.x).toBeLessThan(1.25);
+  expect(duck.userData.squeak).toBeTypeOf('function');
+  const d: MazeDef = { rows: ['RRRER', 'o....', '.....'], entry: { x: 0, y: 1 }, bigs: [{ kind: 'duck', x: 2, y: 1, w: 1, h: 1 }], items: [], friends: [] };
+  const u = new Underground(d);
+  u.enter();
+  run(u, 1 / 60);
+  u.debugPlace(1, 1);
+  run(u, 0.05, { x: 1, y: 0 });
+  expect(tapOnce(u)).toContain('big');
+  expect(u.clockRinging).toBe(true);
+  u.dispose();
+});

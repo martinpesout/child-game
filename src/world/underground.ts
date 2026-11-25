@@ -4,7 +4,7 @@ import { PartKit } from '../characters/parts';
 import { Worm, Beetle } from '../characters/critters4';
 import { MazeGrid, toDir, type BigKind, type MazeDef } from '../levels/maze';
 import { makeTreat } from './treats';
-import { makeClock, makeDino } from './buried';
+import { makeClock, makeDino, makeDuck } from './buried';
 import { DirtFx } from './digfx';
 import { makeRootBand } from './roots';
 import type { Body } from '../physics/physics';
@@ -291,7 +291,7 @@ export class Underground {
       if (r.bigKind && this.bigCooldown === 0) {
         this.bigCooldown = BIG_REPEAT;
         ev.push({ type: 'big', big: r.bigKind, obj: this.hamster.root });
-        if (r.bigKind === 'clock') this.clockT = 0;
+        if (r.bigKind === 'clock' || r.bigKind === 'duck') this.clockT = 0;
         if (r.bigKind === 'dino') {
           this.skullT = 0;
           this.beetle?.startle();
@@ -365,7 +365,7 @@ export class Underground {
     if (this.clock && this.clockT >= 0) {
       this.clockT += dt;
       const k = Math.max(0, 1 - this.clockT / 2.2);
-      (this.clock.userData.ring as (t: number, k: number) => void)(this.t, k);
+      ((this.clock.userData.ring ?? this.clock.userData.squeak) as (t: number, k: number) => void)(this.t, k);
       if (this.clockT >= 2.2) this.clockT = -1;
     }
     this.worm?.update(dt);
@@ -514,8 +514,9 @@ export class Underground {
     const g = new THREE.Group();
     g.position.set(cx, cy, z);
     s.add(g);
-    if (big.kind === 'clock') {
-      this.clock = makeClock(big.w * C * 0.95, big.h * C * 0.95);
+    if (big.kind === 'clock' || big.kind === 'duck') {
+      // both ring/squeak when bumped (same animation slot)
+      this.clock = big.kind === 'clock' ? makeClock(big.w * C * 0.95, big.h * C * 0.95) : makeDuck(big.w * C * 0.95, big.h * C * 0.95);
       g.add(this.clock);
     } else if (big.kind === 'dino') {
       const dino = makeDino(big.w * C * 0.95, big.h * C);
