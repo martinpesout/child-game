@@ -50,3 +50,21 @@ it('plot má málo dílů (výkon) a každý úsek má vlastní materiál (zprů
   const m1 = (f.children[1].children[0] as THREE.Mesh).material;
   expect(m0).not.toBe(m1);
 });
+
+it('kocour má zelené oči, růžové polštářky a při mňouknutí se mu naježí srst a ocas', () => {
+  const c = new Cat();
+  expect(c.root.getObjectByName('iris')).toBeTruthy();
+  expect(c.root.getObjectByName('pads')).toBeTruthy();
+  const bristle = c.root.getObjectByName('bristle')!;
+  const tail = c.root.getObjectByName('tail')!;
+  c.update(1 / 60);
+  expect(bristle.scale.y).toBeLessThan(0.2);
+  const tailBefore = tail.scale.x;
+  c.scare();
+  for (let i = 0; i < 12; i++) c.update(1 / 60);
+  expect(bristle.scale.y).toBeGreaterThan(0.6);
+  expect(tail.scale.x).toBeGreaterThan(tailBefore * 1.2);
+  for (let i = 0; i < 120; i++) c.update(1 / 60);
+  expect(bristle.scale.y).toBeLessThan(0.2);
+  c.dispose();
+});
