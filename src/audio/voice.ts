@@ -39,6 +39,11 @@ export class VoiceLines {
     private readonly onSpeaking: (on: boolean) => void = () => {},
   ) {}
 
+  /** True while a line is still being spoken. */
+  get isSpeaking(): boolean {
+    return this.speaking;
+  }
+
   private setSpeaking(on: boolean): void {
     if (this.speaking === on) return;
     this.speaking = on;

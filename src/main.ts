@@ -148,7 +148,7 @@ function startLevel(id = levelId) {
     onRespawn: () => screens.fade(),
     onCritter(kind, obj) {
       // one speaker at a time: never interrupt a friend or another quip
-      if (phase !== 'play' || bubble) return;
+      if (phase !== 'play' || bubble || voice.isSpeaking) return;
       if (kind === 'bee') sfx.buzz();
       else sfx.flutter();
       say(pickQuip(kind), obj);
@@ -403,7 +403,8 @@ new GameLoop(
 
     if (bubble) {
       bubbleT += dt;
-      if (bubbleT > BUBBLE_TIME) {
+      // keep the bubble up while the voice is still talking (long instructions)
+      if (bubbleT > BUBBLE_TIME && !(voice.isSpeaking && bubbleT < BUBBLE_TIME * 3)) {
         bubble.hide();
         bubble = null;
       }

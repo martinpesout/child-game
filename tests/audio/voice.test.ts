@@ -111,3 +111,14 @@ it('say(id, onEnd) zavolá onEnd po dořečení, ale ne když ji přeruší jin�
   await v.say('l5home1'); // interrupts B
   expect(endB).not.toHaveBeenCalled();
 });
+
+it('isSpeaking platí, dokud hláška nedozní (aby ji nic nepřerušilo)', async () => {
+  const sp = speech();
+  const v = new VoiceLines(sp, {}, vi.fn());
+  expect(v.isSpeaking).toBe(false);
+  void v.say('thanks');
+  expect(v.isSpeaking).toBe(true);
+  const done = sp.say.mock.calls[0][1] as () => void;
+  done();
+  expect(v.isSpeaking).toBe(false);
+});
